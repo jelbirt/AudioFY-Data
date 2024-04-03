@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import java.awt.Color;
@@ -66,6 +71,25 @@ import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 
+	/* Set of unresolved known issues, as well as future areas/features to be developed
+	* FUTURE AREAS FOR DEVELOPMENT:
+	*
+	* Graph panel size/axis scaling
+	* Error Handling (Batch vs Event) Functionality/Restrategize and Refactor
+	* TODO : TD, Excel, AudioMP3 Outputs
+	* TODO : Test Input File actionListener event
+	* TODO : Config option to select the graphed value (raw vs normalized vs log vs hz)
+	* TODO : Update graph/axis titles
+	* TODO : Graph Panel negative values.
+	
+	* NEW TODOS
+	* TODO : IDEA for graph panel: slightly larger JPanel, create/embed horizontal scrollbar above or below actual graph, set visible to false until
+	*		  a "notesPlayed" counter reaches the width of the X-Axis and then set it to become visible
+	* TODO : Data Panel can only be moved around screen if clicking/dragging on the white data column rows - nowhere else on screen
+	* TODO : Video file with audio + graph as it plays
+	* TODO : reset button on play panel?
+	*/
+
 public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 	private String version = "1.0";
 	private boolean GUI_SETUP = false;
@@ -130,24 +154,7 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 	private ArrayList<AudioFormat> audioOutputAFs = null;
 
 	
-	// TODO : When resizing the graph panel window, data doesn't show up (even though the code runs) on screen as part of the resize.
-	//        Axis and labels (prior to data) show fine.  Using a larger JPanel with scrollpanes makes the problem worse
-	// TODO : Graph panel size issues - should y be cut in size by some multiplier when the y max of the graph space is < MAX Hz?
-	// TODO : Error Handling (Batch vs Event)
-	// TODO : TD, Excel, AudioMP3 Outputs
-	// TODO : Test Input File actionListener event
-	// TODO : Config option to select the graphed value (raw vs normalized vs log vs hz)
-	// TODO : Update graph/axis titles
-	// TODO : Graph Panel negative values.
-	
-	// NEW TODOS
-	// TODO : IDEA for graph panel: slightly larger JPanel, create/embed horizontal scrollbar above or below actual graph, set visible to false until
-	//		  a "notesPlayed" counter reaches the width of the X-Axis and then set it to become visible
-	// TODO : Data Panel can only be moved around screen if clicking/dragging on the white data column rows - nowhere else on screen
-	// TODO : Video file with audio + graph as it plays
-	// TODO : reset button on play panel?
-	// TODO : data panel color section is remaining white despite selections after using load input file
-	
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
