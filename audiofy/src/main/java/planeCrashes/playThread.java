@@ -1,20 +1,19 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.zip.DataFormatException;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
 
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -121,7 +120,6 @@ public class playThread extends Thread {
 			if(dss.getMaxDataIndex() > maxMDI) {
 				maxMDI = dss.getMaxDataIndex();
 			}
-			//if((mdi > currentIndex && dss.isColumnHeader()) || (mdi >= currentIndex && !dss.isColumnHeader())) { 
 			if (mdi >= currentIndex) {
 				moreData = true;
 				i = currentDSS.size();
@@ -207,21 +205,14 @@ public class playThread extends Thread {
 				if (CONFIG.getNormalization().equals("Individual")) {
 					maxValue = DSS.getMaxValue();
 					minValue = DSS.getMinValue();
-				} // TODO:
+				}
 				XSSFSheet sheet = WB.getSheetAt(DSS.getSheetIndex());
 				XSSFCell c = null;
-				//if (DSS.isColumnHeader()) {
-					XSSFRow r = sheet.getRow(currentIndex+1);
-					if (r != null) {
-						c = r.getCell(DSS.getrORcIndex());
-					}
-				/*} else {
-					XSSFRow r = sheet.getRow(currentIndex+1);
-					if(r != null) {
-						c = r.getCell(DSS.getrORcIndex());
-					}
-				}*/
-				
+				XSSFRow r = sheet.getRow(currentIndex+1);
+				if (r != null) {
+					c = r.getCell(DSS.getrORcIndex());
+				}
+
 				if(c != null) {
 					value = c.getNumericCellValue();
 					values[0] = value;
@@ -240,7 +231,6 @@ public class playThread extends Thread {
 							maxValue += Math.abs(minValue); // adjust max value for the slide
 						}
 					}
-					// TODO : normalize here
 
 					if (CONFIG.getNormalization().equals("Global")) {
 						values[1] = (value - globalMinValue) / (globalMaxValue - globalMinValue);
@@ -251,7 +241,7 @@ public class playThread extends Thread {
 
 					// Log Transformation
 					if (CONFIG.isLogTransform()) {
-						value = Math.log(value);	// TODO : always show?
+						value = Math.log(value);
 					}
 					values[2] = value;
 					
@@ -292,7 +282,7 @@ public class playThread extends Thread {
 	public void testData () throws DataFormatException {
 		String errorReport = "";
 		
-		int maxDev = 1; // TODO this needs to be added to configurations, the configurations window, etc.
+		int maxDev = 1; 
 		if (CONFIG.isStandardDevs() && maxDev < 1) {
 			throw new NumberFormatException("Max Deviations must be greater than 0");
 		}
@@ -350,7 +340,6 @@ public class playThread extends Thread {
 		}
 		
 		for (int i=0; i<tones.size(); ++i) {
-			//System.out.println("Tones(i) Freq. = " + tones.get(i));
 			byte [] toneBuffer = createSinWaveBuffer(tones.get(i), CONFIG.getToneLength());	
 	        SDLine[i].write(toneBuffer, 0, toneBuffer.length);
 		}

@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import javax.swing.JPanel;
@@ -38,7 +43,6 @@ public class graphConfigsTab extends JPanel implements ActionListener {
 		CONFIG = config;
 		PW = parentWindow;
 		// Graph Configuration Tab
-				 // TODO : add Listeners 
 				 JPanel graphConfPanel = new JPanel();
 				    tabbedPane.add("Graph Configurations",graphConfPanel);
 				    GridBagLayout gbl_graphConfPanel = new GridBagLayout();
@@ -150,7 +154,6 @@ public class graphConfigsTab extends JPanel implements ActionListener {
 				    gbc_dataFormatLbl.gridx = 1;
 				    gbc_dataFormatLbl.gridy = 0;
 				    yAxisDataHeaderPanel.add(dataFormatLbl, gbc_dataFormatLbl);
-				    // TODO : ask ben
 				    dataFormatComboBox = new JComboBox();
 				    dataFormatComboBox.setModel(new DefaultComboBoxModel(new String[] {" Raw Data Value", " Normalized Value", " Log Trans. Value", " Hz Value (frequency)"}));
 				    dataFormatComboBox.setSelectedIndex(3);
@@ -214,7 +217,6 @@ public class graphConfigsTab extends JPanel implements ActionListener {
 				    gbc_yTickIntervalLbl.gridx = 2;
 				    gbc_yTickIntervalLbl.gridy = 2;
 				    yAxisDataHeaderPanel.add(yTickIntervalLbl, gbc_yTickIntervalLbl);
-				    // TODO : Set these two invisible (or unavailable) unless Axis Tick CheckboX is checked
 				    yTickIntervalTxt = new JTextField();
 				    yTickIntervalTxt.setText("0.0");
 				    GridBagConstraints gbc_yTickIntervalTxt = new GridBagConstraints();
@@ -239,18 +241,6 @@ public class graphConfigsTab extends JPanel implements ActionListener {
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals("Update Graph")) {
-			// TODO :
 		}
 	}
-	
-	
-
-    /*tabbedPane.add("Graph Configurations",graphConfPanel);
-    GridBagLayout gbl_graphConfPanel = new GridBagLayout();
-    gbl_graphConfPanel.columnWidths = new int[]{0};
-    gbl_graphConfPanel.rowHeights = new int[]{0};
-    gbl_graphConfPanel.columnWeights = new double[]{Double.MIN_VALUE};
-    gbl_graphConfPanel.rowWeights = new double[]{Double.MIN_VALUE};
-    graphConfPanel.setLayout(gbl_graphConfPanel);*/
-
 }

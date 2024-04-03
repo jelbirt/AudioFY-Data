@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import java.awt.Color;
@@ -12,9 +17,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class Configurations implements Serializable {
-		/**
-	 * 
-	 */
+
 		private static final long serialVersionUID = 1L;
 		private String minFreq = "";
 		private String maxFreq = "";

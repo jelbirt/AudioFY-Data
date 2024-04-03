@@ -1,17 +1,19 @@
-package planeCrashes;
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*   Testing Class
+*/
+
+package test;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Iterator;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
@@ -23,21 +25,19 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  
  
  
-public class planeCrashes {
+public class planeCrashesTest {
 	  private XSSFWorkbook workbook;
 	  private XSSFSheet sheet;
-      private String FILE_IN_NAME = "C:\\temp\\Airplane_Crashes_and_Fatalities_Since_1908.csv"; // TODO : Fill in input file name
+      private String FILE_IN_NAME = "C:\\temp\\Airplane_Crashes_and_Fatalities_Since_1908.csv"; 
       private String FILE_OUT_NAME = "C:\\temp\\PlaneCrashes.xlsx";
-      //private int COL_COUNT = 13;
-      //private String textQualifier = "\"";
       private String textDelimiter = ",";
       private Hashtable<Integer,Integer[]> agd = new Hashtable<Integer,Integer[]>(); //  Year, Stored Data[Record Count,Total Passengers,Total Deaths]
   
           public static void main(String[] args) {
-                 new planeCrashes();
+                 new planeCrashesTest();
           }
          
-          public planeCrashes() {
+          public planeCrashesTest() {
                  readFile();
           }
          
@@ -45,47 +45,35 @@ public class planeCrashes {
 	            String line = "";
 	            String[] split = null;
 	            boolean headerRow = true;
-	            //int lineNo = 1;
 	            try {
 		               BufferedReader br = new BufferedReader(new FileReader(FILE_IN_NAME));
 	                   while ((line = br.readLine()) != null) {
 	                	   		split = parse(line);
-	                	   		if (headerRow) {	// TODO : Handle HEADER ROW
+	                	   		if (headerRow) {
 	                        	  	headerRow = false;
 	                	   		} else {			// NOT the Header row
-	                        	  	//try {
-			                             for(int i=0;i<split.length;i++) { 
-			                            	 split[i] = split[i].trim(); 
-			                             }
-			                             
-			                             if (split.length == 3) {
-			                                    if (!split[1].isEmpty() && !split[2].isEmpty()) {
-		                                            String[] date = split[0].split("/"); // [Month,Day,Year]
-				                                    Integer year = Integer.valueOf(date[2]);
-				                                  
-				                                    Integer[] data = new Integer[3];
-				                                    data[0] = 0; data[1] = 0; data[2] = 0;
-				                                  
-				                                    if(agd.containsKey(year)) {
-				                                           data = agd.get(year);
-				                                    }                   
-				                                    data[0] += 1; // add the new record count
-				                                    data[1] += Integer.valueOf(split[1]); // element 1 references # of people aboard column          --> adds value to cumulative
-				                                    data[2] += Integer.valueOf(split[2]); // element 2 references # of fatalities of people aboard   --> adds value to cumulative
-				                                    //System.out.println(data[1]);
-				                                    agd.put(year, data);				                        
-			                                    }
-			                             }
-	                        	  /*	} catch(Exception e) {
-		                                 System.out.print(lineNo + " : " + split.length + "\t");
-		                                 System.out.println(line);
-		                                 for(int i=0;i<split.length;i++) { 
-		                                	 System.out.println("split[" + i + "] = ||" + split[i] + "||"); 
-		                                 }
-	                        	  	} */
+									for(int i=0;i<split.length;i++) { 
+										split[i] = split[i].trim(); 
+									}
+									
+									if (split.length == 3) {
+										if (!split[1].isEmpty() && !split[2].isEmpty()) {
+											String[] date = split[0].split("/"); // [Month,Day,Year]
+											Integer year = Integer.valueOf(date[2]);
+											
+											Integer[] data = new Integer[3];
+											data[0] = 0; data[1] = 0; data[2] = 0;
+											
+											if(agd.containsKey(year)) {
+													data = agd.get(year);
+											}                   
+											data[0] += 1; // add the new record count
+											data[1] += Integer.valueOf(split[1]); // element 1 references # of people aboard column          --> adds value to cumulative
+											data[2] += Integer.valueOf(split[2]); // element 2 references # of fatalities of people aboard   --> adds value to cumulative
+											agd.put(year, data);				                        
+										}
+									}
 	                          }			// END ELSE
-	                	   	  
-	                        //  lineNo++;
 	                   	 }
 	                   	 br.close();
 	             } catch (Exception e) {
@@ -169,41 +157,6 @@ public class planeCrashes {
               line = line.trim(); // remove empty space from ends
              
               String[] split = line.split(textDelimiter);
- 
-              /*if(split.length > COL_COUNT) {
-	                String[] newsplit = new String[COL_COUNT];
-	                for(int i=0;i<newsplit.length;i++) { 
-	                	newsplit[i] = ""; 
-	                }  
-	                int cur_col = 0; // what is the current column of data for storage CORRECTLY
-	                boolean is_join = false;
-	                for(int i=0;i<split.length;i++) { // i is the column of data based on the split which is INCORRECT as it made too many columns                
-	                	if(split[i].startsWith(textQualifier) || is_join) {
-                             if(split[i].startsWith(textQualifier)) {
-                                    is_join = true;
-                             }
-                            
-                             if(split[i].endsWith(textQualifier)) {
-                                    if(newsplit[cur_col].isEmpty()) {
-                                           newsplit[cur_col] = split[i];
-                                    } else {
-                                           newsplit[cur_col] += textDelimiter + split[i];
-                                    }
-                                    cur_col++; is_join = false;
-                             } else {
-                                    if(newsplit[cur_col].isEmpty()) {
-                                           newsplit[cur_col] = split[i];
-                                    } else {
-                                           newsplit[cur_col] += textDelimiter + split[i];
-                                    }
-                             }
-	                	} else {
-                             newsplit[cur_col] = split[i]; // does not start with " so just copy it over
-                             cur_col++; is_join = false;
-	                	}
-	                }
-	                split = newsplit;
-              }*/
               return split;
          }
 }

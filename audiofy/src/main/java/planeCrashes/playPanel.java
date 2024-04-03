@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import javax.swing.JFrame;
@@ -33,7 +38,7 @@ public class playPanel extends JPanel implements MouseListener, MouseMotionListe
 	private AudioFY AF = null;
 	private Configurations CONFIG = null;
 	private playThread PT = null;
-	private int OVAL_SIZE = 5; // TODO - size control?
+	private int OVAL_SIZE = 5;
 	private int dataFormatIndex = 4;
 	
 	
@@ -111,7 +116,6 @@ public class playPanel extends JPanel implements MouseListener, MouseMotionListe
 					AF.getTDOutputWriter().close();
 				}
 			} else if(buttonCommand.equals("PLAY")) {	
-				// TODO : CHECK IF AN OUTPUT FILE HAS BEEN SPECIFIED
 				// Outputs
 				if(CONFIG.isExcelOutput()) { 
 					AF.setOutputWB(new XSSFWorkbook());

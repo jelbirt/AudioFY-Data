@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import javax.swing.JPanel;
@@ -14,12 +19,10 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.zip.DataFormatException;
-import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JScrollPane;
 import javax.swing.JButton;
@@ -239,7 +242,6 @@ public class sheetTabPanel extends JPanel implements ChangeListener, ActionListe
 			return;
 		}
 		lastHeaderStatusRow = row_header;
-		//Collections.sort(dataList);
 		DefaultListModel<String> lm = new DefaultListModel<String>();
 		for (int i=0; i < dataList.size(); ++i) {
 			lm.addElement(dataList.get(i));

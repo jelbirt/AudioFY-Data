@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import java.awt.Color;
@@ -6,12 +11,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import java.awt.GridBagLayout;
-import javax.swing.JScrollPane;
-import java.awt.GridBagConstraints;
 
 public class GraphPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -46,13 +48,6 @@ public class GraphPanel extends JPanel {
 		gridBagLayout.columnWeights = new double[]{0.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
 		setLayout(gridBagLayout);
-		
-		/*JScrollPane scrollPane = new JScrollPane();
-		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-		gbc_scrollPane.fill = GridBagConstraints.BOTH;
-		gbc_scrollPane.gridx = 0;
-		gbc_scrollPane.gridy = 1;
-		add(scrollPane, gbc_scrollPane);*/
 
 	}
 	
@@ -62,7 +57,7 @@ public class GraphPanel extends JPanel {
 		paintText(g,graphTitle, centerX, axisColor, true, false);	
 		paintAxis(g,true,graphTitle,xAxisTitle,yAxisTitle,yMinDefault,yMaxDefault);
 		repaintData();
-	}//start.x - (width/2),start.y
+	}
 
 	public void setCONFIG(Configurations config) {
 		CONFIG = config;
@@ -73,14 +68,12 @@ public class GraphPanel extends JPanel {
 	}
 	
 	public void clearWindow(Graphics g) {
-		//masterData = new ArrayList<Object[]>();
 		g.setColor(Color.white);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		g.dispose();
 	}
 
 	public void clearGraph(Graphics g) {
-		//masterData = new ArrayList<Object[]>();
 		g.setColor(Color.white);
 		g.fillRect(axisOffset + 1, axisOffset, getWidth() - (axisOffset), getHeight() - (2*axisOffset));
 		g.dispose();
@@ -119,7 +112,6 @@ public class GraphPanel extends JPanel {
 	}
  	
 	public void paintData(ArrayList<Object[]> data, boolean save) {
-		// data[0][] = { Color, Point, Size }
 		Graphics g = getGraphics();
 		
 		if(save) {
@@ -129,10 +121,8 @@ public class GraphPanel extends JPanel {
 		for(int i=0;i<data.size();i++) {
 			g.setColor((Color)data.get(i)[0]);
 			Point loc = (Point)data.get(i)[1];
-			// System.out.println("Point: " + (loc.toString()));
 			int yPos = (int)((double)loc.y / Double.valueOf(CONFIG.getMaxFreq()) * (double)(getHeight() - (2 * axisOffset))); // scaling
 			int size = (Integer)data.get(i)[2];
-			// dataPointOffset puts space between points, loc.x * size accommodates for overlapping on > 1 pixel size
 			g.fillOval((int)(loc.x + axisOffset + (loc.x * size * dataPointOffset)), (getHeight() - axisOffset) - yPos, size, size);
 		}
 		g.dispose();
@@ -140,7 +130,6 @@ public class GraphPanel extends JPanel {
 	
 	public void updateRepaintGP(playThread PT, Graphics g, AudioFY AF) {
 		
-		// if (any data points visible on graph) { get/store current index of last played note to repaint data points later 
 		Graphics g2 = getGraphics();
 		if (needDataRepaint) {
 			g2 = getGraphics();
@@ -179,8 +168,6 @@ public class GraphPanel extends JPanel {
 		Point start = new Point(axisOffset, getHeight() - axisOffset);
 		Point endX = new Point(getWidth() - axisOffset, getHeight() - axisOffset);
 		Point endY = new Point(axisOffset, axisOffset);
-		//System.out.println("start: " + start + "\t endX: " + endX.toString() + "\t endY: " + endY.toString());
-		
 		
 		g.setColor(axisColor);
 		g.drawLine(start.x, start.y, endX.x, endX.y);	// draws x axis
@@ -192,7 +179,6 @@ public class GraphPanel extends JPanel {
 			paintText(g, xTitle, endX, axisColor, false, false);
 			endY.y -= (g.getFontMetrics().getHeight() / 2 + 4); // "-4" here and line below are custom adjustments to place yAxisTitle over axis
 			endY.x = axisOffset - 4;
-			//endY.x += g.getFontMetrics().stringWidth(yTitle) + (g.getFontMetrics().getHeight() * 2);
 			paintText(g, yTitle, endY, axisColor, false, true);
 			
 			endY.x = axisOffset - g.getFontMetrics().stringWidth(String.valueOf(yMax));
@@ -208,16 +194,6 @@ public class GraphPanel extends JPanel {
 	
 	public void paintTickLines(Graphics g, String numTicks, boolean tickLabels) {
 		if (Integer.valueOf(numTicks) != 0) {
-		/*int divisor;
-		if (numTicks.equals("50%")) {
-			divisor = 2;
-		} else if (numTicks.equals("33%")) {
-			divisor = 3;
-		} else if (numTicks.equals("25%")) {
-			divisor = 4;
-		} else { // numTicks = 10%
-			divisor = 10;
-		}*/
 		int divisor = Integer.valueOf(numTicks);
 		System.out.println("divisor: \t " + divisor);
 		Point start = new Point(axisOffset, getHeight() - axisOffset);
@@ -248,20 +224,11 @@ public class GraphPanel extends JPanel {
 		g2.setColor(c);
 		g2.setFont(displayFont);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		
-		/*if(rotate90) {
-			AffineTransform at = AffineTransform.getQuadrantRotateInstance(3);
-			g2.setTransform(at);
-			g2.drawString(text,start.x*-1,start.y); 
-			at = AffineTransform.getQuadrantRotateInstance(0);
-			g2.setTransform(at);
-		} else {*/
-			int width = g2.getFontMetrics().stringWidth(text);
-			if(!centerX) { 
-				width = 0;
-			}
-			g2.drawString(text,start.x - (width/2),start.y); 
-		//}
+		int width = g2.getFontMetrics().stringWidth(text);
+		if(!centerX) { 
+			width = 0;
+		}
+		g2.drawString(text,start.x - (width/2),start.y); 
 	}
 
 	public String getyMinDefault() {

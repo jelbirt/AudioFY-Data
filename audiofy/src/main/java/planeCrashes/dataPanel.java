@@ -1,3 +1,8 @@
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*/
+
 package planeCrashes;
 
 import javax.swing.JColorChooser;
@@ -9,9 +14,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import javax.swing.JTable;
 import javax.swing.table.TableColumn;
-
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.awt.Insets;
 import java.awt.Point;
@@ -142,10 +144,8 @@ public class dataPanel extends JPanel implements MouseListener, MouseMotionListe
 	}
 	
 	public void resetDataTable() {
-		//this.set_data(new Object[][] {});
 		System.out.println("im running");
 		set_data(new Object[][] {{"-","-","-","-","-","-","-","-","-"}});
-		//DTM = new dataTableModel(columnNames, new Object[][] {{"-","-","-","-","-","-","-","-","-"}});
 		table.setModel(DTM);
 		DTM.fireTableDataChanged();
 		table.repaint();
@@ -160,7 +160,7 @@ public class dataPanel extends JPanel implements MouseListener, MouseMotionListe
 	}
 	
 	public void update_display_data(Hashtable<String,double[]> data) {
-		for(int i=0;i<DTM.getRowCount();i++) {	// TODO : create new output sheets for each row
+		for(int i=0;i<DTM.getRowCount();i++) {
 			String vName = (String)DTM.getValueAt(i, 0); // first column variable name
 			if(data.containsKey(vName)) {
 				double[] vD = data.get(vName); // raw, normalized, log(), Proportional, Hz, Std Dev, Sq Std Dev
@@ -304,15 +304,14 @@ public class dataPanel extends JPanel implements MouseListener, MouseMotionListe
         int X = thisX + xMoved;
         int Y = thisY + yMoved;
         PW.setLocation(X, Y);
-		//System.out.println("mouseDragged : " + e.getX() + "," + e.getY());
 	}
 
 	public void mouseMoved(MouseEvent e) {
-		//System.out.println("mouseMoved : " + e.getX() + "," + e.getY());
+		//System.out.println("mouseMoved : " + e.getX() + "," + e.getY()); -- Unit Test Code
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		//System.out.println("mouseClicked : " + e.getX() + "," + e.getY());
+		//System.out.println("mouseClicked : " + e.getX() + "," + e.getY()); -- Unit Test Code
     }
 
 
@@ -322,16 +321,16 @@ public class dataPanel extends JPanel implements MouseListener, MouseMotionListe
 		oriPWSize.setLocation(PW.getWidth(),PW.getHeight());
 
 		if (initialClick.getX() <= borderSize || initialClick.getY() <= borderSize || initialClick.getX() >= (oriPWSize.x - borderSize)
-		|| initialClick.getY() >= (oriPWSize.y  - borderSize) /*|| fastResize*/) {
+		|| initialClick.getY() >= (oriPWSize.y  - borderSize)) {
 			resize = true;
 		} else {
 			resize = false;
 		}
-		//System.out.println("mousePressed : " + e.getX() + "," + e.getY());
+		//System.out.println("mousePressed : " + e.getX() + "," + e.getY()); -- Unit Test Code
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		//System.out.println("mouseReleased : " + e.getX() + "," + e.getY());
+		//System.out.println("mouseReleased : " + e.getX() + "," + e.getY()); -- Unit Test Code
 	}
 
 	public void mouseEntered(MouseEvent e) {

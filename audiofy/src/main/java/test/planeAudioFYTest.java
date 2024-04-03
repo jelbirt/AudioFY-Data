@@ -1,4 +1,10 @@
-package planeCrashes;
+/* @Author Jacob Elbirt
+*	AudioFY Project created during 2023 Summer Aisiku Research Fellowship
+*	Not intended for commercial use
+*   Testing Class
+*/
+
+package test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,18 +17,12 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-	// TODO : Consider addressing handling the situation of using year column as input, as years increment minimally
-	// and cause problems with data spacing --> sparsity of data is so minimal that frequency barely changes (not noticeable)
-	// Increase in data over the entire course (100 years) is too minimal to notice
-	// + HOW TO DETECT THIS ^ --> standard deviations?
-
-public class planeAudio {
+public class planeAudioFYTest {
 
 	private Double MINHZ = 200.0;
 	private Double MAXHZ = 2000.0;
@@ -36,12 +36,10 @@ public class planeAudio {
 	private boolean debug = true;
 	
 	
-	public planeAudio() {
+	public planeAudioFYTest() {
 		
 	}
-	
-	// TODO : add output with information on the max/minvalue, normalization values etc. --> maybe in new sheet in the workbook
-	// Another future possibility : Reading/Writing to databases
+
 	
 	public void run() throws DataFormatException, IOException, NumberFormatException, LineUnavailableException {
 		String FILE_IN_NAME = "C:\\temp\\PlaneCrashes.xlsx";
@@ -56,8 +54,6 @@ public class planeAudio {
 		ArrayList<dataSourceStructure> audioData = new ArrayList<dataSourceStructure>();
 		dataSourceStructure DSS = new dataSourceStructure(0, 2, false);
 		audioData.add(DSS);
-		//DSS = new dataSourceStructure(0, 2, false);
-		//audioData.add(DSS);
 		String error = playData(wb, NORMALIZE, LOGTRANSFORM, STANDARDDEV, NUMDEVIATIONS, audioData, batchError, indivNormalization);
 		System.out.println(error);
 		
@@ -67,14 +63,13 @@ public class planeAudio {
 	public static void main(String[] args) {
 		try {
 			
-			planeAudio PA = new planeAudio();
+			planeAudioFYTest PA = new planeAudioFYTest();
 			PA.run();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	// Returns an empty String if there are no errors (and also plays the audio)
 	public String playData (XSSFWorkbook wb, boolean normalize, boolean logTransform, boolean standDev, int maxDev,
 	ArrayList<dataSourceStructure> audioData, boolean batchReport, boolean individualNormalization) throws NumberFormatException, DataFormatException, LineUnavailableException {
 		String errorReport = "";
@@ -85,8 +80,6 @@ public class planeAudio {
 			throw new NumberFormatException("max Deviations must be greater than 0");
 		}
 		
-		// looping through all data and make sure there are no problems while calculating the largest/smallest values
-		// which will be used later for normalizing frequency
 		if (debug) {
 			System.out.println("Normalize: " + normalize + "\tLog Transform: " + logTransform + "\tIndividual Norm:" + individualNormalization);
 			System.out.println("Starting data analysis...");

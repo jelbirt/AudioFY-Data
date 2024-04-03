@@ -36,7 +36,6 @@ import java.awt.GridBagLayout;
 import javax.swing.JPanel;
 import java.awt.GridBagConstraints;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -53,41 +52,32 @@ import javax.swing.ListModel;
 import javax.swing.JTabbedPane;
 import javax.swing.JSlider;
 import java.awt.Font;
-import java.awt.Graphics;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 
-	/* Set of unresolved known issues, as well as future areas/features to be developed
+	/* Future areas/features to be developed:
+	*
+	*
 	* FUTURE AREAS FOR DEVELOPMENT:
 	*
 	* Graph panel size/axis scaling
-	* Error Handling (Batch vs Event) Functionality/Restrategize and Refactor
-	* TODO : TD, Excel, AudioMP3 Outputs
-	* TODO : Test Input File actionListener event
-	* TODO : Config option to select the graphed value (raw vs normalized vs log vs hz)
-	* TODO : Update graph/axis titles
-	* TODO : Graph Panel negative values.
-	
-	* NEW TODOS
-	* TODO : IDEA for graph panel: slightly larger JPanel, create/embed horizontal scrollbar above or below actual graph, set visible to false until
-	*		  a "notesPlayed" counter reaches the width of the X-Axis and then set it to become visible
-	* TODO : Data Panel can only be moved around screen if clicking/dragging on the white data column rows - nowhere else on screen
-	* TODO : Video file with audio + graph as it plays
-	* TODO : reset button on play panel?
+	* Error Handling (Batch vs Event) Functionality/Re-strategize and Refactor
+	* Image (.png/.jpg), Video (.mp4) outputs
+	* Graph Panel negative values.
+	* Reset button on play panel?
+	* Test Input File button feature (or remove)
+	* Re-factor AudioFY class to have one class devoted to GUI, one for back-end/communication (3?)
 	*/
 
 public class AudioFY implements ActionListener, ChangeListener, KeyListener {
@@ -734,7 +724,7 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 		    gbc_dataFormatLbl.gridx = 1;
 		    gbc_dataFormatLbl.gridy = 0;
 		    yAxisDataHeaderPanel.add(dataFormatLbl, gbc_dataFormatLbl);
-		    // TODO : ask ben
+
 		    dataFormatComboBox = new JComboBox();
 		    dataFormatComboBox.setModel(new DefaultComboBoxModel(new String[] {" Raw Data Value", " Normalized Value", " Log Trans. Value", " Hz Value (frequency)"}));
 		    dataFormatComboBox.setSelectedIndex(3);
@@ -795,7 +785,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 		    yAxisTicksCheckBox.setSelected(false);
 		    
 		    JLabel yTickIntervalLbl = new JLabel("Number of Tick Lines");
-		    // JLabel yTickIntervalLbl = new JLabel("Tick Interval");
 		    yTickIntervalLbl.setToolTipText("Tick Lines are evenly distributed amongst the Graph Area");
 		    GridBagConstraints gbc_yTickIntervalLbl = new GridBagConstraints();
 		    gbc_yTickIntervalLbl.anchor = GridBagConstraints.EAST;
@@ -807,7 +796,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 		    
 			yTickIntComboBox = new JComboBox();
 			yTickIntComboBox.setToolTipText("Tick Lines are evenly distributed amongst the Graph Area");
-			// yTickIntComboBox.setModel(new DefaultComboBoxModel(new String[] {"50%", "33%", "25%", "10%"}));
 			yTickIntComboBox.setModel(new DefaultComboBoxModel(new String[] {"2", "3", "4", "10"}));
 			yTickIntComboBox.setSelectedIndex(0);
 			GridBagConstraints gbc_yTickIntComboBox = new GridBagConstraints();
@@ -856,10 +844,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 		 PW_FRAME = new JFrame();
 		 PW_FRAME.setType(Type.UTILITY);
 		 PP = new playPanel(PW_FRAME, BORDER_SIZE, this, create_configurations());		 
-		 //JScrollPane PPScrollPane = new JScrollPane(PP.getGP());
-		 //PPScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-	     //PPScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-	     //PPScrollPane.setBounds(640, 400, 500, 20);
 		 DP.setPlayPanel(PP); // need it here because PW wasn't setup yet and is needed
 		 PW_FRAME.addMouseListener(PP);
 		 PW_FRAME.addMouseMotionListener(PP);
@@ -960,7 +944,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 				updateDPvariables();
 				PTHREAD.setGlobalMinMax(getGlobalMinMax());
 				PP.getGP().paintComponent(PP.getGP().getGraphics());
-				//PTHREAD.executeIndex(false, 0);		//<-- Not sure why, but this was breaking this function
 			} catch (Exception E) {
 				E.printStackTrace();
 				if(!E.getMessage().equals("")) {
@@ -1129,7 +1112,7 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 			// TODO :
 		} else if (e.getActionCommand().equals("EXIT")) {
 			sysExit();
-		} else if (e.getActionCommand().equals("Update Graph")) {	// TODO : clear graph components if pressed and buttons are unchecked
+		} else if (e.getActionCommand().equals("Update Graph")) {	
 			if (PTHREAD.isRunning()) {
 				PTHREAD.setStop(true);
 				PTHREAD.setRunning(false);
@@ -1137,7 +1120,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 						+ "Press Play to continue your current play-through, or \ntry again when the play-through is not running." ,
 						"Error Alert", JOptionPane.ERROR_MESSAGE);
 			} else {
-				//PP.getGP().clearGraph(PP.getGP().getGraphics());
 				// handle dataFormat/minMax values for graph
 				double[] minMax = getGlobalMinMax();
 				if (dataFormatComboBox.getSelectedIndex()==0) {	//raw data value
@@ -1302,8 +1284,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 			if (changeSave) {
 				needSave = true;
 			}
-			
-			// TODO - need to update the active displays (PP and DP) post changes
 		}
 	}
 	
@@ -1831,7 +1811,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 			sheetTabPanel stp = INPUT_SHEETS.get(sheetName);
 			DSS.addAll(stp.getDSSList(DP.get_dataColorModel(), DP.get_dataTableModel()));
 		}
-			// TODO : recursive call above??
 		return DSS;
 	}
 	
@@ -1888,7 +1867,7 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
         }
 	}
 	
-	public void writeToTDOutputFile(String varName, double[] varData) { 	// TODO : TD Output needs var name in 1st column and other values shifted right 
+	public void writeToTDOutputFile(String varName, double[] varData) { 
 		String outputLine = varName + "\t";
 		for (int i=0; i<varData.length; ++i) {
 			outputLine += String.valueOf(varData[i]) + "\t";
@@ -1980,8 +1959,6 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 	            		audioOutputAFs.get(i + 1), 
 	            		(long) (audioOutputTones.get(i + 1).length)
 	            );
-	            //AudioSystem.write(clip2, AudioFileFormat.Type.WAVE, new File(wavFile2));
-                //clip2 = AudioSystem.getAudioInputStream(new File(wavFile2));
                 AudioInputStream clip1 = null;
 
 	            //clip 1:
@@ -1992,12 +1969,8 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
 		            		audioOutputAFs.get(i),
 		            		(long) (audioOutputTones.get(i).length)
 		            );
-					//AudioSystem.write(clip1, AudioFileFormat.Type.WAVE, new File(wavFile1));
-	                //clip1 = AudioSystem.getAudioInputStream(new File(wavFile1));
 	            } else {
 	            	clip1 = masterClip;
-					//AudioSystem.write(clip1, AudioFileFormat.Type.WAVE, new File(wavFile1));
-	                //clip1 = AudioSystem.getAudioInputStream(outputFile);
 	            }
 
 	            //appendedFiles
@@ -2021,65 +1994,24 @@ public class AudioFY implements ActionListener, ChangeListener, KeyListener {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        	
-
-        	
-        	
-        	
-        	
-        	
-        	
-        	
-        	
-        	/*try {
-        		AudioInputStream clip1;
-        		InputStream audio2 = new ByteArrayInputStream(audioOutputTones.get(i + 1));
-	            AudioInputStream clip2 = new AudioInputStream(
-	            		audio2, 
-	            		audioOutputAFs.get(i + 1), 
-	            		(long) (audioOutputTones.get(i + 1).length)
-	            );
-        		if (i==0) {	// if first clips, input stream directly from clips (not pre existing output file)
-        			InputStream audio1 = new ByteArrayInputStream(audioOutputTones.get(i));
-        			clip1 = new AudioInputStream(
-    	            		audio1, 
-    	            		audioOutputAFs.get(i), 
-    	            		(long) (audioOutputTones.get(i).length)
-    	            );
-        		} else {
-        			clip1 = AudioSystem.getAudioInputStream(outputFile);
-        			System.out.println("audioOutputTones(i) length: " + audioOutputTones.get(i).length + "\t audioOutputAFs(i) frameRate: " + 
-        					audioOutputAFs.get(i).getFrameRate());
-        		}
-	            AudioInputStream appendedFiles = new AudioInputStream(
-	                                new SequenceInputStream(clip1, clip2),     
-	                                audioOutputAFs.get(i), 
-	                                clip1.getFrameLength() + clip2.getFrameLength()
-	            );
-	            //outputFile.delete();
-	            //AudioSystem.write(appendedFiles, AudioFileFormat.Type.WAVE, outputFile);
-	            AudioSystem.write(clip2, AudioFileFormat.Type.WAVE, outputFile);
-        	} catch (Exception e) {
-        		e.printStackTrace();
-        	}*/
     	}
 
 
     }
 	
-	public void publishOutputs(Configurations CONFIG) {	// TODO : add to this for audio/video outputs
+	public void publishOutputs(Configurations CONFIG) {
 		if (CONFIG.isExcelOutput()) {
 			publishXLOutputWB();
 			outputWB = null;
 			outputSHT = null;
 		}
-		/*if (CONFIG.isTDOutput()) {
+		if (CONFIG.isTDOutput()) {
 			try {
 				TDOutputWriter.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}*/
+		}
 		if (CONFIG.isAudioOutput()) {
 			String FILE_OUT_NAME = guiOutputFile.getText() + "//AudioFY_Audio_RENAME.wav";
 			File output = new File(FILE_OUT_NAME);
