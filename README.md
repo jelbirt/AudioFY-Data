@@ -37,6 +37,10 @@ Output file types currently supported:
 
 In the future, we hope to develop features to offer generating image (.png) and video (.mp4) files of the play-through and the final Graph Panel image after analysis conclusion.
 
+## Contact
+
+With any questions/suggestions, reach out to the author at jelbirt@worcester.edu.
+
 ## Acknowledgements
 
 *AudioFY Data* was developed by Jacob Elbirt as part of the Summer 2023 Aisiku Research Fellowship through Worcester State University.
