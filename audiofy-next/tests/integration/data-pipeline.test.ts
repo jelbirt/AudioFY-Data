@@ -32,9 +32,11 @@ import type { DataSource, ParsedSheet } from '../../src/types';
 const SIMPLE_CSV = 'x,y\n1,10\n2,20\n3,30\n4,40\n5,50';
 
 /** CSV with mixed types */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MIXED_CSV = 'name,score,grade\nAlice,85,A\nBob,92,A\nCharlie,78,B\nDiana,95,A\nEve,88,B';
 
 /** CSV with no header (all numeric) */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ALL_NUMERIC_CSV = '1,2,3\n4,5,6\n7,8,9\n10,11,12';
 
 // ---------------------------------------------------------------------------
@@ -84,12 +86,7 @@ describe('Integration: createDataSource', () => {
   });
 
   it('throws on insufficient numeric columns', () => {
-    // CSV with only 1 numeric column
-    const csv = 'name,score\nAlice,85\nBob,92';
-    // parseFile should detect name as categorical, but score as numeric — 1 col
-    // buildDataSource requires 2 numeric columns
-    // Actually this depends on parser detection — let's just test the mixed CSV
-    // which has name (categorical), score (numeric), grade (categorical) → only 1 numeric col
+    // buildDataSource requires 2 numeric columns; all-text CSV won't have any
     expect(() => createDataSource('name,value\nAlice,test\nBob,hello', 'bad.csv')).toThrow();
   });
 

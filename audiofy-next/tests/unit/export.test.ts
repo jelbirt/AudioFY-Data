@@ -80,7 +80,6 @@ function createMockSVG(): SVGSVGElement {
 describe('Export: exportSVG', () => {
   let mockCreateObjectURL: ReturnType<typeof vi.fn>;
   let mockRevokeObjectURL: ReturnType<typeof vi.fn>;
-  let clickedHref: string | undefined;
 
   beforeEach(() => {
     mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-url');
@@ -88,16 +87,13 @@ describe('Export: exportSVG', () => {
     URL.createObjectURL = mockCreateObjectURL;
     URL.revokeObjectURL = mockRevokeObjectURL;
 
-    clickedHref = undefined;
     // Mock anchor click
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
       if (tag === 'a') {
         const anchor = {
           href: '',
           download: '',
-          click: vi.fn(function (this: { href: string }) {
-            clickedHref = this.href;
-          }),
+          click: vi.fn(),
         } as unknown as HTMLAnchorElement;
         return anchor;
       }

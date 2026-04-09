@@ -217,7 +217,7 @@ describe('SyncController', () => {
 
   beforeEach(() => {
     mock = createMockEngine();
-    ctrl = new SyncController(mock.engine as any);
+    ctrl = new SyncController(mock.engine as unknown as import('../../src/core/audio/engine').AudioEngine);
     vi.useFakeTimers();
   });
 
@@ -399,7 +399,7 @@ describe('SyncController', () => {
   });
 
   it('constructor accepts options', () => {
-    const customCtrl = new SyncController(mock.engine as any, {
+    const customCtrl = new SyncController(mock.engine as unknown as import('../../src/core/audio/engine').AudioEngine, {
       defaultDuration: 30,
       defaultSpeed: 1.5,
       defaultLoop: true,
