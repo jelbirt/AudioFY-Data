@@ -18,7 +18,7 @@
  * SourceList — displays loaded data sources with color indicators,
  * selection, remove buttons, and full keyboard navigation.
  */
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { useAppStore } from '@store';
 
 export function SourceList() {
@@ -27,6 +27,27 @@ export function SourceList() {
   const selectSource = useAppStore((s) => s.selectSource);
   const removeSource = useAppStore((s) => s.removeSource);
   const listRef = useRef<HTMLDivElement>(null);
+  const [announcement, setAnnouncement] = useState('');
+
+  /** Announce a selection change to screen readers via live region. */
+  const announceSelection = useCallback(
+    (sourceId: string) => {
+      const source = sources.find((s) => s.id === sourceId);
+      if (source) {
+        setAnnouncement(`Selected ${source.name}`);
+      }
+    },
+    [sources],
+  );
+
+  /** Select a source and announce the change. */
+  const handleSelect = useCallback(
+    (sourceId: string) => {
+      selectSource(sourceId);
+      announceSelection(sourceId);
+    },
+    [selectSource, announceSelection],
+  );
 
   /**
    * Handle arrow key navigation within the source list.
@@ -68,13 +89,13 @@ export function SourceList() {
       }
 
       if (nextIndex !== null) {
-        selectSource(sources[nextIndex].id);
+        handleSelect(sources[nextIndex].id);
         // Move focus to the newly selected item
         const items = listRef.current?.querySelectorAll('[role="option"]');
         (items?.[nextIndex] as HTMLElement)?.focus();
       }
     },
-    [sources, selectedSourceId, selectSource, removeSource],
+    [sources, selectedSourceId, handleSelect, removeSource],
   );
 
   if (sources.length === 0) {
@@ -95,6 +116,10 @@ export function SourceList() {
       <div className="sidebar-section-title" id="sources-heading">
         Sources ({sources.length})
       </div>
+      {/* Live region for screen reader announcements */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
       <div
         ref={listRef}
         className="source-list"
@@ -108,14 +133,14 @@ export function SourceList() {
             key={source.id}
             id={`source-${source.id}`}
             className={`source-item ${selectedSourceId === source.id ? 'selected' : ''}`}
-            onClick={() => selectSource(source.id)}
+            onClick={() => handleSelect(source.id)}
             role="option"
             aria-selected={selectedSourceId === source.id}
             tabIndex={selectedSourceId === source.id ? 0 : -1}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                selectSource(source.id);
+                handleSelect(source.id);
               }
             }}
           >

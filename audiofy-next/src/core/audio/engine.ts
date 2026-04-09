@@ -372,7 +372,17 @@ export function computeNotes(source: DataSource, totalDuration: number): Schedul
   const rows = source.rows;
   const numPoints = rows.length;
 
-  if (numPoints === 0) return [];
+  if (numPoints === 0 || totalDuration <= 0) return [];
+
+  // Validate mapping ranges — ensure they are finite and ordered
+  const [freqLo, freqHi] = mapping.frequencyRange;
+  if (!Number.isFinite(freqLo) || !Number.isFinite(freqHi) || freqLo <= 0 || freqHi <= 0) {
+    return [];
+  }
+  const [volLo, volHi] = mapping.volumeRange;
+  if (!Number.isFinite(volLo) || !Number.isFinite(volHi)) return [];
+  const [panLo, panHi] = mapping.panRange;
+  if (!Number.isFinite(panLo) || !Number.isFinite(panHi)) return [];
 
   // Find the column indices in the numeric-only rows array
   const xColIdx = source.columns.findIndex((c) => c.index === mapping.xColumn);

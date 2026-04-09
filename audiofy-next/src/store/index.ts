@@ -45,7 +45,7 @@ import { DEFAULT_PLAYBACK, DEFAULT_VISUALIZATION, DEFAULT_AUDIO } from '@core/co
 export interface AppState {
   // --- Data ---
   sources: DataSource[];
-  parsedFiles: Map<string, ParsedFile>;
+  parsedFiles: Record<string, ParsedFile>;
 
   // --- Playback / Sync ---
   playbackState: PlaybackState;
@@ -120,7 +120,7 @@ export type AppStore = AppState & AppActions;
 export const useAppStore = create<AppStore>((set) => ({
   // --- Initial state ---
   sources: [],
-  parsedFiles: new Map(),
+  parsedFiles: {},
   playbackState: 'stopped',
   currentTime: 0,
   progress: 0,
@@ -139,9 +139,9 @@ export const useAppStore = create<AppStore>((set) => ({
 
   addSource: (source, parsedFile) =>
     set((state) => {
-      const newParsedFiles = new Map(state.parsedFiles);
+      const newParsedFiles = { ...state.parsedFiles };
       if (parsedFile) {
-        newParsedFiles.set(source.fileName, parsedFile);
+        newParsedFiles[source.fileName] = parsedFile;
       }
       return {
         sources: [...state.sources, source],
@@ -151,10 +151,34 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
 
   removeSource: (sourceId) =>
-    set((state) => ({
-      sources: state.sources.filter((s) => s.id !== sourceId),
-      selectedSourceId: state.selectedSourceId === sourceId ? null : state.selectedSourceId,
-    })),
+    set((state) => {
+      const remaining = state.sources.filter((s) => s.id !== sourceId);
+      const removedSource = state.sources.find((s) => s.id === sourceId);
+
+      // Clean up parsedFiles if no other source references the same fileName
+      const newParsedFiles = { ...state.parsedFiles };
+      if (removedSource) {
+        const stillReferenced = remaining.some((s) => s.fileName === removedSource.fileName);
+        if (!stillReferenced) {
+          delete newParsedFiles[removedSource.fileName];
+        }
+      }
+
+      // Auto-select another source if the deleted one was selected
+      let nextSelected = state.selectedSourceId;
+      if (state.selectedSourceId === sourceId) {
+        const deletedIndex = state.sources.findIndex((s) => s.id === sourceId);
+        // Prefer the next source, or the previous one, or null
+        nextSelected =
+          remaining[Math.min(deletedIndex, remaining.length - 1)]?.id ?? null;
+      }
+
+      return {
+        sources: remaining,
+        parsedFiles: newParsedFiles,
+        selectedSourceId: nextSelected,
+      };
+    }),
 
   updateSourceMapping: (sourceId, mapping) =>
     set((state) => ({
@@ -187,7 +211,7 @@ export const useAppStore = create<AppStore>((set) => ({
       ),
     })),
 
-  clearSources: () => set({ sources: [], parsedFiles: new Map(), selectedSourceId: null }),
+  clearSources: () => set({ sources: [], parsedFiles: {}, selectedSourceId: null }),
 
   setPlaybackState: (playbackState) => set({ playbackState }),
   setCurrentTime: (currentTime) => set({ currentTime }),

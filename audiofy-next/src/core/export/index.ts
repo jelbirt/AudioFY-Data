@@ -194,8 +194,15 @@ export async function exportAudio(
   }
 
   // Create a recorder connected to the Tone.js destination
-  const recorder = new Tone.Recorder();
-  Tone.getDestination().connect(recorder);
+  let recorder: Tone.Recorder;
+  try {
+    recorder = new Tone.Recorder();
+    Tone.getDestination().connect(recorder);
+  } catch (err) {
+    throw new Error(
+      `Failed to initialize audio recorder: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 
   const transport = Tone.getTransport();
 
@@ -224,7 +231,14 @@ export async function exportAudio(
     });
 
     // Stop recording and get the blob
-    const blob = await recorder.stop();
+    let blob: Blob;
+    try {
+      blob = await recorder.stop();
+    } catch (err) {
+      throw new Error(
+        `Audio encoding failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
     // Download
     downloadBlob(blob, filename ?? timestampedName('audiofy-audio', 'webm'));

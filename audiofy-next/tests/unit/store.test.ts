@@ -63,7 +63,7 @@ describe('AppStore', () => {
     // Reset store to initial state
     useAppStore.setState({
       sources: [],
-      parsedFiles: new Map(),
+      parsedFiles: {},
       playbackState: 'stopped',
       currentTime: 0,
       progress: 0,
@@ -114,7 +114,7 @@ describe('AppStore', () => {
       useAppStore.getState().addSource(source, parsedFile);
 
       const state = useAppStore.getState();
-      expect(state.parsedFiles.get('test.csv')).toEqual(parsedFile);
+      expect(state.parsedFiles['test.csv']).toEqual(parsedFile);
     });
 
     it('removeSource removes a source by id', () => {
@@ -125,7 +125,7 @@ describe('AppStore', () => {
       expect(useAppStore.getState().sources).toHaveLength(0);
     });
 
-    it('removeSource clears selection if removed source was selected', () => {
+    it('removeSource clears selection if removed source was the only one', () => {
       const source = mockSource();
       useAppStore.getState().addSource(source);
       expect(useAppStore.getState().selectedSourceId).toBe('test-source-1');
@@ -146,6 +146,21 @@ describe('AppStore', () => {
       expect(useAppStore.getState().selectedSourceId).toBe('src-2');
     });
 
+    it('removeSource auto-selects next source when selected source is deleted', () => {
+      const s1 = mockSource({ id: 'src-1', fileName: 'a.csv' });
+      const s2 = mockSource({ id: 'src-2', fileName: 'b.csv' });
+      const s3 = mockSource({ id: 'src-3', fileName: 'c.csv' });
+      useAppStore.getState().addSource(s1);
+      useAppStore.getState().addSource(s2);
+      useAppStore.getState().addSource(s3);
+      // Select the middle source
+      useAppStore.getState().selectSource('src-2');
+
+      useAppStore.getState().removeSource('src-2');
+      // Should auto-select src-3 (the source at the same index)
+      expect(useAppStore.getState().selectedSourceId).toBe('src-3');
+    });
+
     it('clearSources removes all sources', () => {
       useAppStore.getState().addSource(mockSource({ id: 'a' }));
       useAppStore.getState().addSource(mockSource({ id: 'b' }));
@@ -154,7 +169,7 @@ describe('AppStore', () => {
       const state = useAppStore.getState();
       expect(state.sources).toHaveLength(0);
       expect(state.selectedSourceId).toBeNull();
-      expect(state.parsedFiles.size).toBe(0);
+      expect(Object.keys(state.parsedFiles).length).toBe(0);
     });
   });
 

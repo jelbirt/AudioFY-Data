@@ -109,6 +109,7 @@ export default function App() {
 
   // --- Chart container sizing ---
   const chartRef = useRef<HTMLDivElement>(null);
+  const errorBannerRef = useRef<HTMLDivElement>(null);
   const [chartSize, setChartSize] = useState({ width: 800, height: 500 });
 
   useEffect(() => {
@@ -128,6 +129,13 @@ export default function App() {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // --- Focus error banner when a new error appears ---
+  useEffect(() => {
+    if (error) {
+      errorBannerRef.current?.focus();
+    }
+  }, [error]);
 
   // --- Theme ---
   useEffect(() => {
@@ -267,7 +275,7 @@ export default function App() {
 
         {/* Error banner */}
         {error && (
-          <div className="error-banner" role="alert">
+          <div ref={errorBannerRef} className="error-banner" role="alert" tabIndex={-1}>
             <span>{error}</span>
             <button onClick={() => setError(null)} aria-label="Dismiss error">
               &times;
@@ -303,7 +311,11 @@ export default function App() {
             {/* Chart */}
             <div className="app-chart" ref={chartRef}>
               {sources.length === 0 ? (
-                <div className={`drop-zone ${dragOver ? 'drop-zone-active' : ''}`}>
+                <div
+                  className={`drop-zone ${dragOver ? 'drop-zone-active' : ''}`}
+                  aria-dropeffect="execute"
+                  aria-label="Drop zone: accepts .xlsx, .csv, .tsv, .ods, .json files"
+                >
                   <div className="drop-zone-icon" aria-hidden="true">
                     &#128202;
                   </div>

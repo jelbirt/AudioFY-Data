@@ -17,7 +17,7 @@
 /**
  * useKeyboardShortcuts — global keyboard shortcuts for AudioFY.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface ShortcutHandlers {
   togglePlayPause: () => void;
@@ -27,30 +27,38 @@ interface ShortcutHandlers {
 }
 
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
+  // Use a ref so the keydown listener always calls the latest handlers
+  // without needing to re-register on every render.
+  const handlersRef = useRef(handlers);
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't capture if user is typing in an input
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
+      const h = handlersRef.current;
       switch (e.key) {
         case ' ':
           e.preventDefault();
-          handlers.togglePlayPause();
+          h.togglePlayPause();
           break;
         case 'Escape':
-          handlers.stop();
+          h.stop();
           break;
         case 'o':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            handlers.openFile();
+            h.openFile();
           }
           break;
         case ',':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            handlers.toggleSettings();
+            h.toggleSettings();
           }
           break;
       }
@@ -58,5 +66,5 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlers]);
+  }, []);
 }

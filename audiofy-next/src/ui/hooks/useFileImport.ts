@@ -19,7 +19,7 @@
  *
  * Falls back to an <input type="file"> in development/browser context.
  */
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { createDataSource } from '@core/data';
 import { addRecentFile } from '@core/config';
 import { useAppStore } from '@store';
@@ -32,6 +32,10 @@ export function useFileImport() {
   const setRecentFiles = useAppStore((s) => s.setRecentFiles);
   const setError = useAppStore((s) => s.setError);
   const setLoading = useAppStore((s) => s.setLoading);
+
+  // Ref to hold browser fallback so openFileDialog can reference it
+  // without a circular dependency.
+  const browserDialogRef = useRef<() => void>(() => {});
 
   /**
    * Import a file from an ArrayBuffer (e.g., from drag-and-drop or input).
@@ -95,7 +99,7 @@ export function useFileImport() {
       await importFromBuffer(buffer, fileName, filePath);
     } catch {
       // Tauri not available — fallback to browser file input
-      openBrowserFileDialog();
+      browserDialogRef.current();
     }
   }, [setError, setLoading, importFromBuffer]);
 
@@ -125,6 +129,11 @@ export function useFileImport() {
 
     input.click();
   }, [importFromBuffer, setError, setLoading]);
+
+  // Keep the ref in sync with the latest callback
+  useEffect(() => {
+    browserDialogRef.current = openBrowserFileDialog;
+  });
 
   /**
    * Handle drag-and-drop file events.

@@ -29,6 +29,13 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
   const playbackConfig = useAppStore((s) => s.playbackConfig);
   const sources = useAppStore((s) => s.sources);
 
+  // Keep a ref to playbackConfig so getController doesn't re-create
+  // callbacks when config changes (the sync effect handles updates).
+  const playbackConfigRef = useRef(playbackConfig);
+  useEffect(() => {
+    playbackConfigRef.current = playbackConfig;
+  });
+
   /**
    * Ensure a SyncController exists and is wired to the current engine.
    */
@@ -37,10 +44,11 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
     if (!engine) return null;
 
     if (!controllerRef.current) {
+      const cfg = playbackConfigRef.current;
       const ctrl = new SyncController(engine, {
-        defaultDuration: playbackConfig.duration,
-        defaultSpeed: playbackConfig.speed,
-        defaultLoop: playbackConfig.loop,
+        defaultDuration: cfg.duration,
+        defaultSpeed: cfg.speed,
+        defaultLoop: cfg.loop,
       });
 
       // Pipe sync state changes into the Zustand store
@@ -57,7 +65,7 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
     }
 
     return controllerRef.current;
-  }, [getEngine, syncState, playbackConfig]);
+  }, [getEngine, syncState]);
 
   /**
    * Prepare sources for playback (schedule sonification).
