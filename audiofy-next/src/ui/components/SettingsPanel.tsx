@@ -22,9 +22,18 @@ import { useAppStore } from '@store';
 import type { OscillatorType, NormalizationMode, FrequencyScale } from '@types';
 
 const WAVEFORMS: OscillatorType[] = [
-  'sine', 'square', 'sawtooth', 'triangle',
-  'fmsine', 'fmsquare', 'fmsawtooth', 'fmtriangle',
-  'amsine', 'amsquare', 'amsawtooth', 'amtriangle',
+  'sine',
+  'square',
+  'sawtooth',
+  'triangle',
+  'fmsine',
+  'fmsquare',
+  'fmsawtooth',
+  'fmtriangle',
+  'amsine',
+  'amsquare',
+  'amsawtooth',
+  'amtriangle',
 ];
 
 const NORMALIZATIONS: NormalizationMode[] = ['none', 'min-max', 'z-score', 'robust', 'log'];
@@ -50,12 +59,12 @@ export function SettingsPanel() {
       {/* --- Source Settings --- */}
       {selectedSource && (
         <>
-          <div className="sidebar-section-title">
-            Source: {selectedSource.name}
-          </div>
+          <div className="sidebar-section-title">Source: {selectedSource.name}</div>
 
           <div className="setting-group">
-            <label className="setting-label" htmlFor="setting-color">Color</label>
+            <label className="setting-label" htmlFor="setting-color">
+              Color
+            </label>
             <input
               id="setting-color"
               type="color"
@@ -67,7 +76,9 @@ export function SettingsPanel() {
           </div>
 
           <div className="setting-group">
-            <label className="setting-label" htmlFor="setting-waveform">Waveform</label>
+            <label className="setting-label" htmlFor="setting-waveform">
+              Waveform
+            </label>
             <select
               id="setting-waveform"
               className="setting-select"
@@ -79,32 +90,37 @@ export function SettingsPanel() {
               }
             >
               {WAVEFORMS.map((w) => (
-                <option key={w} value={w}>{w}</option>
+                <option key={w} value={w}>
+                  {w}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="setting-group">
-            <label className="setting-label" htmlFor="setting-normalization">Normalization</label>
+            <label className="setting-label" htmlFor="setting-normalization">
+              Normalization
+            </label>
             <select
               id="setting-normalization"
               className="setting-select"
               value={selectedSource.normalization}
               onChange={(e) =>
-                updateSourceNormalization(
-                  selectedSource.id,
-                  e.target.value as NormalizationMode,
-                )
+                updateSourceNormalization(selectedSource.id, e.target.value as NormalizationMode)
               }
             >
               {NORMALIZATIONS.map((n) => (
-                <option key={n} value={n}>{n}</option>
+                <option key={n} value={n}>
+                  {n}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="setting-group">
-            <label className="setting-label" htmlFor="setting-freq-scale">Frequency Scale</label>
+            <label className="setting-label" htmlFor="setting-freq-scale">
+              Frequency Scale
+            </label>
             <select
               id="setting-freq-scale"
               className="setting-select"
@@ -116,7 +132,9 @@ export function SettingsPanel() {
               }
             >
               {FREQ_SCALES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
           </div>
@@ -127,7 +145,9 @@ export function SettingsPanel() {
               {selectedSource.audioMapping.frequencyRange[1]} Hz
             </label>
             <div className="setting-row">
-              <label htmlFor="setting-freq-min" style={{ fontSize: 11 }}>Min</label>
+              <label htmlFor="setting-freq-min" style={{ fontSize: 11 }}>
+                Min
+              </label>
               <input
                 id="setting-freq-min"
                 type="range"
@@ -147,7 +167,9 @@ export function SettingsPanel() {
               />
             </div>
             <div className="setting-row">
-              <label htmlFor="setting-freq-max" style={{ fontSize: 11 }}>Max</label>
+              <label htmlFor="setting-freq-max" style={{ fontSize: 11 }}>
+                Max
+              </label>
               <input
                 id="setting-freq-max"
                 type="range"
@@ -192,7 +214,15 @@ export function SettingsPanel() {
                     })
                   }
                 />
-                <span style={{ fontSize: 10, width: 36, textAlign: 'right', fontFamily: 'var(--font-mono)' }} aria-hidden="true">
+                <span
+                  style={{
+                    fontSize: 10,
+                    width: 36,
+                    textAlign: 'right',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                  aria-hidden="true"
+                >
                   {selectedSource.audioMapping.envelope[param].toFixed(2)}
                 </span>
               </div>

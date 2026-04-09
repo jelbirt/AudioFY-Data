@@ -36,11 +36,7 @@ import type {
   ADSR,
 } from '@types';
 import type { RecentFile } from '@core/config';
-import {
-  DEFAULT_PLAYBACK,
-  DEFAULT_VISUALIZATION,
-  DEFAULT_AUDIO,
-} from '@core/config';
+import { DEFAULT_PLAYBACK, DEFAULT_VISUALIZATION, DEFAULT_AUDIO } from '@core/config';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -157,53 +153,41 @@ export const useAppStore = create<AppStore>((set) => ({
   removeSource: (sourceId) =>
     set((state) => ({
       sources: state.sources.filter((s) => s.id !== sourceId),
-      selectedSourceId:
-        state.selectedSourceId === sourceId ? null : state.selectedSourceId,
+      selectedSourceId: state.selectedSourceId === sourceId ? null : state.selectedSourceId,
     })),
 
   updateSourceMapping: (sourceId, mapping) =>
     set((state) => ({
       sources: state.sources.map((s) =>
-        s.id === sourceId
-          ? { ...s, audioMapping: { ...s.audioMapping, ...mapping } }
-          : s,
+        s.id === sourceId ? { ...s, audioMapping: { ...s.audioMapping, ...mapping } } : s,
       ),
     })),
 
   updateSourceNormalization: (sourceId, mode) =>
     set((state) => ({
-      sources: state.sources.map((s) =>
-        s.id === sourceId ? { ...s, normalization: mode } : s,
-      ),
+      sources: state.sources.map((s) => (s.id === sourceId ? { ...s, normalization: mode } : s)),
     })),
 
   updateSourceColor: (sourceId, color) =>
     set((state) => ({
-      sources: state.sources.map((s) =>
-        s.id === sourceId ? { ...s, color } : s,
-      ),
+      sources: state.sources.map((s) => (s.id === sourceId ? { ...s, color } : s)),
     })),
 
   updateSourceWaveform: (sourceId, waveform) =>
     set((state) => ({
       sources: state.sources.map((s) =>
-        s.id === sourceId
-          ? { ...s, audioMapping: { ...s.audioMapping, waveform } }
-          : s,
+        s.id === sourceId ? { ...s, audioMapping: { ...s.audioMapping, waveform } } : s,
       ),
     })),
 
   updateSourceEnvelope: (sourceId, envelope) =>
     set((state) => ({
       sources: state.sources.map((s) =>
-        s.id === sourceId
-          ? { ...s, audioMapping: { ...s.audioMapping, envelope } }
-          : s,
+        s.id === sourceId ? { ...s, audioMapping: { ...s.audioMapping, envelope } } : s,
       ),
     })),
 
-  clearSources: () =>
-    set({ sources: [], parsedFiles: new Map(), selectedSourceId: null }),
+  clearSources: () => set({ sources: [], parsedFiles: new Map(), selectedSourceId: null }),
 
   setPlaybackState: (playbackState) => set({ playbackState }),
   setCurrentTime: (currentTime) => set({ currentTime }),
@@ -228,8 +212,7 @@ export const useAppStore = create<AppStore>((set) => ({
     })),
 
   selectSource: (selectedSourceId) => set({ selectedSourceId }),
-  toggleSettingsPanel: () =>
-    set((state) => ({ settingsPanelOpen: !state.settingsPanelOpen })),
+  toggleSettingsPanel: () => set((state) => ({ settingsPanelOpen: !state.settingsPanelOpen })),
   setSettingsPanelOpen: (settingsPanelOpen) => set({ settingsPanelOpen }),
   setRecentFiles: (recentFiles) => set({ recentFiles }),
   setError: (error) => set({ error }),

@@ -242,7 +242,9 @@ body {
   color: var(--text-primary);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   min-height: 28px;
 }
 

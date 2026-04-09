@@ -48,15 +48,28 @@ const adsrSchema = z.object({
 }) satisfies z.ZodType<ADSR>;
 
 const oscillatorTypeSchema = z.enum([
-  'sine', 'square', 'sawtooth', 'triangle',
-  'fmsine', 'fmsquare', 'fmsawtooth', 'fmtriangle',
-  'amsine', 'amsquare', 'amsawtooth', 'amtriangle',
+  'sine',
+  'square',
+  'sawtooth',
+  'triangle',
+  'fmsine',
+  'fmsquare',
+  'fmsawtooth',
+  'fmtriangle',
+  'amsine',
+  'amsquare',
+  'amsawtooth',
+  'amtriangle',
 ]) satisfies z.ZodType<OscillatorType>;
 
 const frequencyScaleSchema = z.enum(['log', 'linear', 'midi']) satisfies z.ZodType<FrequencyScale>;
 
 const normalizationModeSchema = z.enum([
-  'none', 'min-max', 'z-score', 'robust', 'log',
+  'none',
+  'min-max',
+  'z-score',
+  'robust',
+  'log',
 ]) satisfies z.ZodType<NormalizationMode>;
 
 const audioMappingSchema = z.object({
@@ -87,14 +100,33 @@ const playbackConfigSchema = z.object({
 }) satisfies z.ZodType<PlaybackConfig>;
 
 const biquadFilterTypeSchema = z.enum([
-  'lowpass', 'highpass', 'bandpass', 'lowshelf',
-  'highshelf', 'peaking', 'notch', 'allpass',
+  'lowpass',
+  'highpass',
+  'bandpass',
+  'lowshelf',
+  'highshelf',
+  'peaking',
+  'notch',
+  'allpass',
 ]) as z.ZodType<BiquadFilterType>;
 
 const effectsConfigSchema = z.object({
-  reverb: z.object({ enabled: z.boolean(), decay: z.number().min(0.1).max(30), wet: z.number().min(0).max(1) }),
-  filter: z.object({ enabled: z.boolean(), frequency: z.number().min(20).max(20000), type: biquadFilterTypeSchema }),
-  chorus: z.object({ enabled: z.boolean(), frequency: z.number().min(0.1).max(100), delayTime: z.number().min(0).max(100), depth: z.number().min(0).max(1) }),
+  reverb: z.object({
+    enabled: z.boolean(),
+    decay: z.number().min(0.1).max(30),
+    wet: z.number().min(0).max(1),
+  }),
+  filter: z.object({
+    enabled: z.boolean(),
+    frequency: z.number().min(20).max(20000),
+    type: biquadFilterTypeSchema,
+  }),
+  chorus: z.object({
+    enabled: z.boolean(),
+    frequency: z.number().min(0.1).max(100),
+    delayTime: z.number().min(0).max(100),
+    depth: z.number().min(0).max(1),
+  }),
 }) satisfies z.ZodType<EffectsConfig>;
 
 const visualizationConfigSchema = z.object({
@@ -192,9 +224,7 @@ export function validateConfig(input: unknown): ValidationResult {
     return { success: true, config: result.data, errors: [] };
   }
 
-  const errors = result.error.issues.map(
-    (issue) => `${issue.path.join('.')}: ${issue.message}`,
-  );
+  const errors = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
 
   return { success: false, config: null, errors };
 }

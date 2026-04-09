@@ -59,6 +59,7 @@ export interface TableRow {
   columnNames: string[];
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildTableRows(sources: DataSource[]): TableRow[] {
   const rows: TableRow[] = [];
 
@@ -79,6 +80,7 @@ export function buildTableRows(sources: DataSource[]): TableRow[] {
 }
 
 /** Sort rows by a column value */
+// eslint-disable-next-line react-refresh/only-export-components
 export function sortRows(
   rows: TableRow[],
   columnIndex: number,
@@ -94,6 +96,7 @@ export function sortRows(
 }
 
 /** Check if a row is active */
+// eslint-disable-next-line react-refresh/only-export-components
 export function isRowActive(row: TableRow, activePoints: ActivePoint[]): boolean {
   return activePoints.some(
     (ap) => ap.sourceId === row.sourceId && ap.pointIndex === row.pointIndex,
@@ -120,9 +123,7 @@ export function DataTable({
   const rawRows = useMemo(() => buildTableRows(sources), [sources]);
   const rows = useMemo(
     () =>
-      sort.columnIndex !== null
-        ? sortRows(rawRows, sort.columnIndex, sort.direction)
-        : rawRows,
+      sort.columnIndex !== null ? sortRows(rawRows, sort.columnIndex, sort.direction) : rawRows,
     [rawRows, sort],
   );
 
@@ -160,20 +161,17 @@ export function DataTable({
   }, [activePoints]);
 
   // Sort handler
-  const handleSort = useCallback(
-    (colIndex: number) => {
-      setSort((prev) => {
-        if (prev.columnIndex === colIndex) {
-          // Cycle: asc → desc → null
-          const nextDir: SortDirection =
-            prev.direction === 'asc' ? 'desc' : prev.direction === 'desc' ? null : 'asc';
-          return { columnIndex: nextDir === null ? null : colIndex, direction: nextDir };
-        }
-        return { columnIndex: colIndex, direction: 'asc' };
-      });
-    },
-    [],
-  );
+  const handleSort = useCallback((colIndex: number) => {
+    setSort((prev) => {
+      if (prev.columnIndex === colIndex) {
+        // Cycle: asc → desc → null
+        const nextDir: SortDirection =
+          prev.direction === 'asc' ? 'desc' : prev.direction === 'desc' ? null : 'asc';
+        return { columnIndex: nextDir === null ? null : colIndex, direction: nextDir };
+      }
+      return { columnIndex: colIndex, direction: 'asc' };
+    });
+  }, []);
 
   const isDark = config.theme === 'dark';
   const showSourceColumn = sources.length > 1;
@@ -308,9 +306,7 @@ export function DataTable({
                         : 'rgba(0,0,0,0.02)',
                   cursor: 'pointer',
                   transition: 'background 80ms ease',
-                  borderLeft: active
-                    ? `3px solid ${row.sourceColor}`
-                    : '3px solid transparent',
+                  borderLeft: active ? `3px solid ${row.sourceColor}` : '3px solid transparent',
                 }}
               >
                 <td

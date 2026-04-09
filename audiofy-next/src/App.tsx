@@ -81,10 +81,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p style={{ fontSize: 13, color: 'var(--text-secondary, #666)', maxWidth: 400 }}>
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
-          <button
-            className="btn"
-            onClick={() => this.setState({ hasError: false, error: null })}
-          >
+          <button className="btn" onClick={() => this.setState({ hasError: false, error: null })}>
             Try Again
           </button>
         </div>
@@ -228,10 +225,7 @@ export default function App() {
     try {
       await initialize();
       const duration = playbackConfig.duration;
-      await exportWAV(
-        () => sync.prepare(),
-        duration,
-      );
+      await exportWAV(() => sync.prepare(), duration);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audio export failed');
     }
@@ -256,24 +250,14 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div
-        className="app-layout"
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-      >
+      <div className="app-layout" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
         {/* Skip to main content link */}
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>
 
         {/* ARIA live region for playback state announcements */}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className="sr-only"
-        >
+        <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
           {announcement}
         </div>
 
@@ -305,7 +289,11 @@ export default function App() {
           {/* Sidebar */}
           <nav className="app-sidebar" aria-label="Data sources and settings">
             <SourceList />
-            {settingsPanelOpen && <div id="settings-panel"><SettingsPanel /></div>}
+            {settingsPanelOpen && (
+              <div id="settings-panel">
+                <SettingsPanel />
+              </div>
+            )}
           </nav>
 
           {/* Main content */}
@@ -314,7 +302,9 @@ export default function App() {
             <div className="app-chart" ref={chartRef}>
               {sources.length === 0 ? (
                 <div className={`drop-zone ${dragOver ? 'drop-zone-active' : ''}`}>
-                  <div className="drop-zone-icon" aria-hidden="true">&#128202;</div>
+                  <div className="drop-zone-icon" aria-hidden="true">
+                    &#128202;
+                  </div>
                   <div>Drop a spreadsheet here or click Open File</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     Supports .xlsx, .csv, .tsv, .ods, .json

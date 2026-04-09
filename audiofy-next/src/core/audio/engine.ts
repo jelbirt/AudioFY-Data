@@ -21,13 +21,7 @@
  * ADSR envelopes, effects chain, and playback lifecycle.
  */
 import * as Tone from 'tone';
-import type {
-  DataSource,
-  AudioMapping,
-  ADSR,
-  EffectsConfig,
-  OscillatorType,
-} from '@types';
+import type { DataSource, AudioMapping, ADSR, EffectsConfig, OscillatorType } from '@types';
 import {
   normalize,
   mapToFrequencyLog,
@@ -212,12 +206,7 @@ export class AudioEngine {
           channel.panner.pan.setValueAtTime(note.pan, time);
 
           // Trigger the note
-          channel.synth.triggerAttackRelease(
-            note.frequency,
-            note.duration,
-            time,
-            note.velocity,
-          );
+          channel.synth.triggerAttackRelease(note.frequency, note.duration, time, note.velocity);
 
           // Fire callbacks (via Tone.Draw for visual sync)
           Tone.getDraw().schedule(() => {
@@ -443,7 +432,19 @@ function mapFrequency(normalizedValue: number, mapping: AudioMapping): number {
  */
 function toneOscType(
   type: OscillatorType,
-): 'sine' | 'square' | 'sawtooth' | 'triangle' | 'fmsine' | 'fmsquare' | 'fmsawtooth' | 'fmtriangle' | 'amsine' | 'amsquare' | 'amsawtooth' | 'amtriangle' {
+):
+  | 'sine'
+  | 'square'
+  | 'sawtooth'
+  | 'triangle'
+  | 'fmsine'
+  | 'fmsquare'
+  | 'fmsawtooth'
+  | 'fmtriangle'
+  | 'amsine'
+  | 'amsquare'
+  | 'amsawtooth'
+  | 'amtriangle' {
   return type;
 }
 

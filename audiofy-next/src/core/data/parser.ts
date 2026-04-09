@@ -106,8 +106,6 @@ export function detectHeaders(raw: (string | number | boolean | null)[][]): {
 
   // Check first row: is it mostly non-numeric while rest is mostly numeric?
   const firstRowTextRatio = textRatio(firstRow);
-  const restFirstRowTextRatio =
-    restRows.length > 0 ? averageTextRatio(restRows.map((r) => r[0])) : 0;
   const restDataTextRatio =
     restRows.length > 0
       ? restRows.reduce((sum, row) => sum + textRatio(row.slice(1)), 0) / restRows.length

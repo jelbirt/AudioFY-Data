@@ -172,4 +172,11 @@ function extractNumericColumn(data: (string | number | null)[][], colIndex: numb
  * Re-export for convenience.
  */
 export { parseFile } from './parser';
-export { normalize, computeStats, mapToRange, mapToFrequencyLog, mapToFrequencyLinear, mapToFrequencyMidi } from './normalization';
+export {
+  normalize,
+  computeStats,
+  mapToRange,
+  mapToFrequencyLog,
+  mapToFrequencyLinear,
+  mapToFrequencyMidi,
+} from './normalization';

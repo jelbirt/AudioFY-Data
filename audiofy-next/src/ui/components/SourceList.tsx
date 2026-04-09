@@ -79,7 +79,9 @@ export function SourceList() {
   if (sources.length === 0) {
     return (
       <div className="sidebar-section">
-        <div className="sidebar-section-title" id="sources-heading">Sources</div>
+        <div className="sidebar-section-title" id="sources-heading">
+          Sources
+        </div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 0' }}>
           No data loaded. Open a file to get started.
         </div>
@@ -116,11 +118,7 @@ export function SourceList() {
               }
             }}
           >
-            <div
-              className="source-color"
-              style={{ background: source.color }}
-              aria-hidden="true"
-            />
+            <div className="source-color" style={{ background: source.color }} aria-hidden="true" />
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div className="source-name">{source.name}</div>
               <div className="source-file">

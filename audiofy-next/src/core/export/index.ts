@@ -201,10 +201,13 @@ export async function exportWAV(
 
     // Wait for the duration + a small buffer for release tails
     await new Promise<void>((resolve) => {
-      setTimeout(() => {
-        Tone.getTransport().stop();
-        resolve();
-      }, (duration + 0.5) * 1000);
+      setTimeout(
+        () => {
+          Tone.getTransport().stop();
+          resolve();
+        },
+        (duration + 0.5) * 1000,
+      );
     });
 
     // Stop recording and get the blob

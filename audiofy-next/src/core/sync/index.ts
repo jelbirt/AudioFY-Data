@@ -66,10 +66,7 @@ export interface SyncControllerOptions {
  * Given sorted notes and a current time, find all notes currently sounding.
  * A note is active if time >= note.time && time < note.time + note.duration.
  */
-export function findActivePoints(
-  notes: ScheduledNote[],
-  currentTime: number,
-): ActivePoint[] {
+export function findActivePoints(notes: ScheduledNote[], currentTime: number): ActivePoint[] {
   const active: ActivePoint[] = [];
 
   for (const note of notes) {

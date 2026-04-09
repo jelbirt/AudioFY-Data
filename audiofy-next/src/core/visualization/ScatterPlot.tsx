@@ -69,6 +69,7 @@ const TRANSITION_DURATION = 80; // ms — fast for audio sync
 // ---------------------------------------------------------------------------
 
 /** Flatten sources into a single PlotPoint[] for D3 */
+// eslint-disable-next-line react-refresh/only-export-components
 export function flattenSources(sources: DataSource[]): PlotPoint[] {
   const points: PlotPoint[] = [];
 
@@ -98,10 +99,8 @@ export function flattenSources(sources: DataSource[]): PlotPoint[] {
 }
 
 /** Check whether a point is currently active */
-export function isPointActive(
-  point: PlotPoint,
-  activePoints: ActivePoint[],
-): boolean {
+// eslint-disable-next-line react-refresh/only-export-components
+export function isPointActive(point: PlotPoint, activePoints: ActivePoint[]): boolean {
   return activePoints.some(
     (ap) => ap.sourceId === point.sourceId && ap.pointIndex === point.pointIndex,
   );
@@ -134,12 +133,12 @@ export function ScatterPlot({
   // Compute scales
   const xExtent = useMemo(() => {
     const ext = d3.extent(points, (d) => d.x) as [number, number];
-    return ext[0] !== undefined ? ext : [0, 1] as [number, number];
+    return ext[0] !== undefined ? ext : ([0, 1] as [number, number]);
   }, [points]);
 
   const yExtent = useMemo(() => {
     const ext = d3.extent(points, (d) => d.y) as [number, number];
-    return ext[0] !== undefined ? ext : [0, 1] as [number, number];
+    return ext[0] !== undefined ? ext : ([0, 1] as [number, number]);
   }, [points]);
 
   const xScale = useMemo(
@@ -223,8 +222,7 @@ export function ScatterPlot({
       .attr('fill', textColor);
 
     // Style axis lines
-    g.selectAll('.x-axis path, .x-axis line, .y-axis path, .y-axis line')
-      .attr('stroke', textColor);
+    g.selectAll('.x-axis path, .x-axis line, .y-axis path, .y-axis line').attr('stroke', textColor);
 
     // Axis labels
     const xLabel = sources[0]?.columns.find(
@@ -286,10 +284,16 @@ export function ScatterPlot({
         // Update grid if shown
         if (config.showGrid) {
           g.select<SVGGElement>('.grid-x').call(
-            d3.axisBottom(newXScale).tickSize(-innerHeight).tickFormat(() => ''),
+            d3
+              .axisBottom(newXScale)
+              .tickSize(-innerHeight)
+              .tickFormat(() => ''),
           );
           g.select<SVGGElement>('.grid-y').call(
-            d3.axisLeft(newYScale).tickSize(-innerWidth).tickFormat(() => ''),
+            d3
+              .axisLeft(newYScale)
+              .tickSize(-innerWidth)
+              .tickFormat(() => ''),
           );
           g.selectAll('.grid line').attr('stroke', gridColor).attr('stroke-opacity', 0.5);
           g.selectAll('.grid .domain').remove();
@@ -330,21 +334,9 @@ export function ScatterPlot({
             .attr('fill', (d) => d.sourceColor)
             .attr('opacity', 0.7)
             .attr('cursor', 'pointer')
-            .call((sel) =>
-              sel
-                .transition()
-                .duration(300)
-                .attr('r', baseR),
-            ),
+            .call((sel) => sel.transition().duration(300).attr('r', baseR)),
         (update) => update,
-        (exit) =>
-          exit.call((sel) =>
-            sel
-              .transition()
-              .duration(200)
-              .attr('r', 0)
-              .remove(),
-          ),
+        (exit) => exit.call((sel) => sel.transition().duration(200).attr('r', 0).remove()),
       )
       .on('click', (_event, d) => {
         onPointClick?.(d.sourceId, d.pointIndex);
@@ -400,20 +392,12 @@ export function ScatterPlot({
       .selectAll<SVGCircleElement, PlotPoint>('.data-point')
       .transition()
       .duration(TRANSITION_DURATION)
-      .attr('r', (d) =>
-        isPointActive(d, activePoints) ? baseR * ACTIVE_RADIUS_MULTIPLIER : baseR,
-      )
+      .attr('r', (d) => (isPointActive(d, activePoints) ? baseR * ACTIVE_RADIUS_MULTIPLIER : baseR))
       .attr('opacity', (d) => (isPointActive(d, activePoints) ? 1 : 0.6))
       .attr('stroke', (d) =>
-        isPointActive(d, activePoints)
-          ? config.theme === 'dark'
-            ? '#fff'
-            : '#000'
-          : 'none',
+        isPointActive(d, activePoints) ? (config.theme === 'dark' ? '#fff' : '#000') : 'none',
       )
-      .attr('stroke-width', (d) =>
-        isPointActive(d, activePoints) ? ACTIVE_STROKE_WIDTH : 0,
-      );
+      .attr('stroke-width', (d) => (isPointActive(d, activePoints) ? ACTIVE_STROKE_WIDTH : 0));
   }, [activePoints, config.pointSize, config.theme]);
 
   // -----------------------------------------------------------------------
@@ -448,10 +432,7 @@ export function ScatterPlot({
   const isDark = config.theme === 'dark';
 
   return (
-    <div
-      className="scatter-plot-container"
-      style={{ position: 'relative', width, height }}
-    >
+    <div className="scatter-plot-container" style={{ position: 'relative', width, height }}>
       <svg
         ref={svgRef}
         width={width}
