@@ -152,7 +152,7 @@ export class SyncController {
     }
 
     // Schedule sonification and capture notes
-    const notes = this.engine.schedulesonification(sources, dur);
+    const notes = this.engine.scheduleSonification(sources, dur);
     this.scheduledNotes = sortNotesByTime(notes);
 
     // Set loop if enabled

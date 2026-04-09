@@ -186,6 +186,7 @@ export async function exportAudio(
   prepareFn: () => void,
   duration: number,
   filename?: string,
+  releaseBuffer?: number,
 ): Promise<void> {
   // Check browser support for MediaRecorder (required by Tone.Recorder)
   if (typeof MediaRecorder === 'undefined') {
@@ -210,14 +211,15 @@ export async function exportAudio(
     await recorder.start();
     transport.start();
 
-    // Wait for the duration + a small buffer for release tails
+    // Wait for the duration + release buffer for tails (default 1s, configurable)
+    const buffer = releaseBuffer ?? 1.0;
     await new Promise<void>((resolve) => {
       setTimeout(
         () => {
           transport.stop();
           resolve();
         },
-        (duration + 0.5) * 1000,
+        (duration + buffer) * 1000,
       );
     });
 

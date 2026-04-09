@@ -254,8 +254,8 @@ export function migrateConfig(data: unknown): AudioFYConfig {
   // Version 1 → 2 migration (placeholder for future use)
   if (obj.version === 1 || !obj.version) {
     // Apply defaults for any missing fields
-    return {
-      version: 2,
+    const migrated = {
+      version: 2 as const,
       sources: Array.isArray(obj.sources) ? (obj.sources as SourceConfig[]) : [],
       playback: {
         ...DEFAULT_PLAYBACK,
@@ -270,6 +270,10 @@ export function migrateConfig(data: unknown): AudioFYConfig {
         ...(typeof obj.audio === 'object' ? obj.audio : {}),
       } as AudioConfig,
     };
+
+    // Validate the migrated config through the schema to catch invalid field values
+    const validated = validateConfig(migrated);
+    return validated.success && validated.config ? validated.config : createDefaultConfig();
   }
 
   // Already version 2 — validate and return

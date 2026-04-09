@@ -138,10 +138,14 @@ export default function App() {
   const playbackConfig = useAppStore((s) => s.playbackConfig);
 
   const handlePlay = useCallback(async () => {
+    if (sources.length === 0) {
+      setError('No data loaded. Open a file first.');
+      return;
+    }
     await initialize();
     sync.prepare();
     sync.play();
-  }, [initialize, sync]);
+  }, [initialize, sync, sources.length, setError]);
 
   const handleStop = useCallback(() => {
     sync.stop();
@@ -289,11 +293,9 @@ export default function App() {
           {/* Sidebar */}
           <nav className="app-sidebar" aria-label="Data sources and settings">
             <SourceList />
-            {settingsPanelOpen && (
-              <div id="settings-panel">
-                <SettingsPanel />
-              </div>
-            )}
+            <div id="settings-panel" aria-hidden={!settingsPanelOpen}>
+              {settingsPanelOpen && <SettingsPanel />}
+            </div>
           </nav>
 
           {/* Main content */}

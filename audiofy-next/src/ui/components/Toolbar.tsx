@@ -27,9 +27,9 @@ interface ToolbarProps {
   onStop: () => void;
   onTogglePlayPause: () => void;
   onSeekProgress: (progress: number) => void;
-  onExportSVG?: () => void;
-  onExportPNG?: () => void;
-  onExportWAV?: () => void;
+  onExportSVG: () => void;
+  onExportPNG: () => void;
+  onExportWAV: () => void;
 }
 
 export function Toolbar({

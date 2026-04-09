@@ -390,7 +390,7 @@ export function DataTable({
                       fontSize: '11px',
                     }}
                   >
-                    {stats[stat].toFixed(2)}
+                    {stats?.[stat] != null ? stats[stat].toFixed(2) : '-'}
                   </td>
                 ))}
               </tr>

@@ -106,9 +106,10 @@ export function detectHeaders(raw: (string | number | boolean | null)[][]): {
 
   // Check first row: is it mostly non-numeric while rest is mostly numeric?
   const firstRowTextRatio = textRatio(firstRow);
+  // For rest data ratio, use all columns (not just sliced) to avoid skewing detection
   const restDataTextRatio =
     restRows.length > 0
-      ? restRows.reduce((sum, row) => sum + textRatio(row.slice(1)), 0) / restRows.length
+      ? restRows.reduce((sum, row) => sum + textRatio(row), 0) / restRows.length
       : 0;
 
   const hasColHeader = firstRowTextRatio > 0.5 && restDataTextRatio < 0.5;

@@ -61,12 +61,14 @@ export function PlaybackControls({
   const handleProgressKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const step = e.shiftKey ? 0.1 : 0.02;
+      // Read fresh progress from store to avoid stale closure during rapid key presses
+      const currentProgress = useAppStore.getState().progress;
       if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
         e.preventDefault();
-        onSeekProgress(Math.min(1, progress + step));
+        onSeekProgress(Math.min(1, currentProgress + step));
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
         e.preventDefault();
-        onSeekProgress(Math.max(0, progress - step));
+        onSeekProgress(Math.max(0, currentProgress - step));
       } else if (e.key === 'Home') {
         e.preventDefault();
         onSeekProgress(0);
@@ -75,7 +77,7 @@ export function PlaybackControls({
         onSeekProgress(1);
       }
     },
-    [progress, onSeekProgress],
+    [onSeekProgress],
   );
 
   return (

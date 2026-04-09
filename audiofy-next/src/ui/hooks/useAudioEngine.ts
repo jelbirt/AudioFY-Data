@@ -42,14 +42,14 @@ export function useAudioEngine() {
     return engineRef.current;
   }, []);
 
-  // Sync master volume + effects when audioConfig changes
+  // Sync master volume + effects when audioConfig changes or engine initializes
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || engine.state === 'uninitialized' || engine.state === 'disposed') return;
 
     engine.setMasterVolume(audioConfig.masterVolume);
     engine.setEffects(audioConfig.effects);
-  }, [audioConfig]);
+  }, [audioConfig, audioInitialized]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -373,8 +373,8 @@ export function ScatterPlot({
           .attr('stroke', config.theme === 'dark' ? '#666' : '#ccc')
           .attr('opacity', 0.9);
       })
-      .on('mouseleave', () => {
-        onPointHover?.(sources[0]?.id ?? '', null);
+      .on('mouseleave', (_event, d) => {
+        onPointHover?.(d.sourceId, null);
         svg.select('.tooltip-group').selectAll('*').remove();
       });
 

@@ -52,7 +52,7 @@ function createMockEngine() {
     engine: {
       addSource: vi.fn(),
       removeSource: vi.fn(),
-      schedulesonification: vi.fn().mockReturnValue(mockNotes),
+      scheduleSonification: vi.fn().mockReturnValue(mockNotes),
       play: vi.fn(() => { isPlaying = true; }),
       pause: vi.fn(() => { isPlaying = false; }),
       stop: vi.fn(() => {
@@ -238,7 +238,7 @@ describe('SyncController', () => {
     ctrl.prepare([source], 10);
 
     expect(mock.engine.addSource).toHaveBeenCalledWith(source);
-    expect(mock.engine.schedulesonification).toHaveBeenCalledWith([source], 10);
+    expect(mock.engine.scheduleSonification).toHaveBeenCalledWith([source], 10);
     expect(ctrl.state.totalDuration).toBe(10);
   });
 

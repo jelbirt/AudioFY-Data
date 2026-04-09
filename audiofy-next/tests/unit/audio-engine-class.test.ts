@@ -280,35 +280,35 @@ describe('AudioEngine', () => {
       engine.addSource(makeSource());
     });
 
-    it('schedulesonification returns notes for source', () => {
-      const notes = engine.schedulesonification([makeSource()], 10);
+    it('scheduleSonification returns notes for source', () => {
+      const notes = engine.scheduleSonification([makeSource()], 10);
       expect(notes).toHaveLength(5);
       expect(mockTransport.schedule).toHaveBeenCalled();
     });
 
-    it('schedulesonification sets totalDuration', () => {
-      engine.schedulesonification([makeSource()], 15);
+    it('scheduleSonification sets totalDuration', () => {
+      engine.scheduleSonification([makeSource()], 15);
       expect(engine.totalDuration).toBe(15);
     });
 
-    it('schedulesonification clears previous schedule', () => {
-      engine.schedulesonification([makeSource()], 10);
+    it('scheduleSonification clears previous schedule', () => {
+      engine.scheduleSonification([makeSource()], 10);
       const clearCount = mockTransport.clear.mock.calls.length;
-      engine.schedulesonification([makeSource()], 10);
+      engine.scheduleSonification([makeSource()], 10);
       // Second call should clear the events scheduled in the first call
       expect(mockTransport.clear.mock.calls.length).toBeGreaterThan(clearCount);
     });
 
-    it('schedulesonification skips sources with no channel', () => {
+    it('scheduleSonification skips sources with no channel', () => {
       const unknownSource = makeSource({ id: 'unknown' });
-      const notes = engine.schedulesonification([unknownSource], 10);
+      const notes = engine.scheduleSonification([unknownSource], 10);
       expect(notes).toHaveLength(0);
     });
 
-    it('schedulesonification skips sources with empty rows', () => {
+    it('scheduleSonification skips sources with empty rows', () => {
       const emptySource = makeSource({ rows: [] });
       engine.addSource(emptySource);
-      const notes = engine.schedulesonification([emptySource], 10);
+      const notes = engine.scheduleSonification([emptySource], 10);
       expect(notes).toHaveLength(0);
     });
   });
@@ -346,7 +346,7 @@ describe('AudioEngine', () => {
     });
 
     it('seek clamps to [0, totalDuration]', () => {
-      engine.schedulesonification([], 10);
+      engine.scheduleSonification([], 10);
       engine.seek(5);
       engine.seek(-1);
       engine.seek(999);

@@ -89,8 +89,14 @@ describe('normalizeRobust', () => {
   it('is resistant to outliers', () => {
     const normal = normalizeRobust([1, 2, 3, 4, 5]);
     const withOutlier = normalizeRobust([1, 2, 3, 4, 1000]);
-    // The first few values should be similar despite the outlier
-    expect(Math.abs(normal[0] - withOutlier[0])).toBeLessThan(Math.abs(normal[0]));
+    // The median (index 2) should be the same for both, demonstrating outlier resistance
+    expect(normal[2]).toBeCloseTo(withOutlier[2], 5);
+    // First 4 values should be identical since Q1/Q3 are the same
+    for (let i = 0; i < 4; i++) {
+      expect(normal[i]).toBeCloseTo(withOutlier[i], 5);
+    }
+    // Outlier value should be clamped to 1 (robust against extreme values)
+    expect(withOutlier[4]).toBe(1);
   });
 });
 

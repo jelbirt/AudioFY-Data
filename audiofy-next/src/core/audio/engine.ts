@@ -193,7 +193,7 @@ export class AudioEngine {
    * @param playbackDuration Total duration in seconds for the sonification
    * @returns Array of scheduled notes for sync controller use
    */
-  schedulesonification(sources: DataSource[], playbackDuration: number): ScheduledNote[] {
+  scheduleSonification(sources: DataSource[], playbackDuration: number): ScheduledNote[] {
     this.ensureReady();
     this.clearSchedule();
 

@@ -75,7 +75,8 @@ export function normalizeRobust(values: number[]): number[] {
   const stats = computeStats(values);
   const iqr = stats.q3 - stats.q1;
   if (iqr === 0) return values.map(() => 0.5);
-  return values.map((v) => (v - stats.q1) / iqr);
+  // Scale so Q1 maps to 0 and Q3 maps to 1, then clamp to [0, 1]
+  return values.map((v) => Math.max(0, Math.min(1, (v - stats.q1) / iqr)));
 }
 
 /**
@@ -101,13 +102,19 @@ export function computeStats(values: number[]): ColumnStats {
     return { min: 0, max: 0, mean: 0, stdDev: 0, median: 0, q1: 0, q3: 0 };
   }
 
-  const sorted = [...values].sort((a, b) => a - b);
+  // Filter out NaN and Infinity values for robust statistics
+  const finite = values.filter(Number.isFinite);
+  if (finite.length === 0) {
+    return { min: 0, max: 0, mean: 0, stdDev: 0, median: 0, q1: 0, q3: 0 };
+  }
+
+  const sorted = [...finite].sort((a, b) => a - b);
   const n = sorted.length;
 
   const min = sorted[0];
   const max = sorted[n - 1];
-  const mean = values.reduce((sum, v) => sum + v, 0) / n;
-  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
+  const mean = sorted.reduce((sum, v) => sum + v, 0) / n;
+  const variance = sorted.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
   const stdDev = Math.sqrt(variance);
   const median = percentile(sorted, 0.5);
   const q1 = percentile(sorted, 0.25);
@@ -146,7 +153,8 @@ export function mapToRange(value: number, min: number, max: number): number {
 export function mapToFrequencyLog(normalizedValue: number, minHz: number, maxHz: number): number {
   if (minHz <= 0 || maxHz <= 0) throw new Error('Frequency bounds must be positive');
   if (minHz > maxHz) [minHz, maxHz] = [maxHz, minHz];
-  return minHz * Math.pow(maxHz / minHz, normalizedValue);
+  const clamped = Number.isFinite(normalizedValue) ? Math.max(0, Math.min(1, normalizedValue)) : 0;
+  return minHz * Math.pow(maxHz / minHz, clamped);
 }
 
 /**
@@ -159,7 +167,8 @@ export function mapToFrequencyLinear(
 ): number {
   if (minHz <= 0 || maxHz <= 0) throw new Error('Frequency bounds must be positive');
   if (minHz > maxHz) [minHz, maxHz] = [maxHz, minHz];
-  return minHz + normalizedValue * (maxHz - minHz);
+  const clamped = Number.isFinite(normalizedValue) ? Math.max(0, Math.min(1, normalizedValue)) : 0;
+  return minHz + clamped * (maxHz - minHz);
 }
 
 /**
@@ -174,6 +183,7 @@ export function mapToFrequencyMidi(
   if (minMidi > maxMidi) [minMidi, maxMidi] = [maxMidi, minMidi];
   const clampedMin = Math.max(0, Math.min(127, minMidi));
   const clampedMax = Math.max(0, Math.min(127, maxMidi));
-  const midiNote = Math.round(clampedMin + normalizedValue * (clampedMax - clampedMin));
+  const clamped = Number.isFinite(normalizedValue) ? Math.max(0, Math.min(1, normalizedValue)) : 0;
+  const midiNote = Math.round(clampedMin + clamped * (clampedMax - clampedMin));
   return 440 * Math.pow(2, (midiNote - 69) / 12);
 }
