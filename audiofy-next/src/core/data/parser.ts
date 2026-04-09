@@ -139,7 +139,10 @@ function averageTextRatio(values: (string | number | boolean | null)[]): number 
 function identifyNumericColumns(data: (string | number | null)[][]): number[] {
   if (data.length === 0) return [];
 
-  const colCount = Math.max(...data.map((row) => row.length));
+  let colCount = 0;
+  for (const row of data) {
+    if (row.length > colCount) colCount = row.length;
+  }
   const numericCols: number[] = [];
 
   for (let col = 0; col < colCount; col++) {

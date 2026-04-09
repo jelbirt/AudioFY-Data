@@ -77,7 +77,13 @@ export class AudioEngine {
   async initialize(): Promise<void> {
     if (this._state !== 'uninitialized') return;
 
-    await Tone.start();
+    try {
+      await Tone.start();
+    } catch (err) {
+      throw new Error(
+        `Failed to start audio context: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
     this.masterGain = new Tone.Gain(0.8).toDestination();
     this.reverb = new Tone.Reverb({ decay: 2, wet: 0 }).connect(this.masterGain);
@@ -153,7 +159,8 @@ export class AudioEngine {
   setSourceVolume(sourceId: string, volume: number): void {
     const channel = this.channels.get(sourceId);
     if (channel) {
-      channel.gain.gain.value = Math.max(0, Math.min(1, volume));
+      const safeVolume = Number.isFinite(volume) ? volume : 0;
+      channel.gain.gain.value = Math.max(0, Math.min(1, safeVolume));
     }
   }
 
@@ -231,6 +238,7 @@ export class AudioEngine {
    */
   play(): void {
     this.ensureReady();
+    if (this._state === 'playing') return;
     const transport = Tone.getTransport();
     transport.start();
     this._state = 'playing';
@@ -332,6 +340,9 @@ export class AudioEngine {
     this.reverb?.dispose();
     this.filter?.dispose();
     this.masterGain?.dispose();
+    this._onNoteStart = [];
+    this._onNoteEnd = [];
+    this._onProgress = [];
     this._state = 'disposed';
   }
 
@@ -458,4 +469,14 @@ export function getAudioEngine(): AudioEngine {
     _instance = new AudioEngine();
   }
   return _instance;
+}
+
+/** Reset singleton (for testing). */
+export function _resetAudioEngine(): void {
+  if (_instance) {
+    if (_instance.state !== 'disposed') {
+      _instance.dispose();
+    }
+    _instance = null;
+  }
 }

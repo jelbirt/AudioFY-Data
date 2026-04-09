@@ -37,17 +37,18 @@ export function SourceList() {
       if (sources.length === 0) return;
 
       const currentIndex = sources.findIndex((s) => s.id === selectedSourceId);
+      const safeIndex = currentIndex === -1 ? 0 : currentIndex;
 
       let nextIndex: number | null = null;
 
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          nextIndex = currentIndex < sources.length - 1 ? currentIndex + 1 : 0;
+          nextIndex = safeIndex < sources.length - 1 ? safeIndex + 1 : 0;
           break;
         case 'ArrowUp':
           e.preventDefault();
-          nextIndex = currentIndex > 0 ? currentIndex - 1 : sources.length - 1;
+          nextIndex = safeIndex > 0 ? safeIndex - 1 : sources.length - 1;
           break;
         case 'Home':
           e.preventDefault();
@@ -102,7 +103,7 @@ export function SourceList() {
         aria-activedescendant={selectedSourceId ? `source-${selectedSourceId}` : undefined}
         onKeyDown={handleListKeyDown}
       >
-        {sources.map((source, _index) => (
+        {sources.map((source) => (
           <div
             key={source.id}
             id={`source-${source.id}`}

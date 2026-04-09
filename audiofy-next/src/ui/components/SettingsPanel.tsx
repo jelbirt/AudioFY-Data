@@ -156,14 +156,16 @@ export function SettingsPanel() {
                 max={8000}
                 value={selectedSource.audioMapping.frequencyRange[0]}
                 aria-label={`Minimum frequency: ${selectedSource.audioMapping.frequencyRange[0]} Hz`}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newMin = parseInt(e.target.value);
+                  const currentMax = selectedSource.audioMapping.frequencyRange[1];
                   updateSourceMapping(selectedSource.id, {
                     frequencyRange: [
-                      parseInt(e.target.value),
-                      selectedSource.audioMapping.frequencyRange[1],
+                      Math.min(newMin, currentMax),
+                      Math.max(newMin, currentMax),
                     ],
-                  })
-                }
+                  });
+                }}
               />
             </div>
             <div className="setting-row">
@@ -178,14 +180,16 @@ export function SettingsPanel() {
                 max={20000}
                 value={selectedSource.audioMapping.frequencyRange[1]}
                 aria-label={`Maximum frequency: ${selectedSource.audioMapping.frequencyRange[1]} Hz`}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newMax = parseInt(e.target.value);
+                  const currentMin = selectedSource.audioMapping.frequencyRange[0];
                   updateSourceMapping(selectedSource.id, {
                     frequencyRange: [
-                      selectedSource.audioMapping.frequencyRange[0],
-                      parseInt(e.target.value),
+                      Math.min(currentMin, newMax),
+                      Math.max(currentMin, newMax),
                     ],
-                  })
-                }
+                  });
+                }}
               />
             </div>
           </div>

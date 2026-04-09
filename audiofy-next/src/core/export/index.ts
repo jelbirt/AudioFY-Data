@@ -15,11 +15,11 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Export utilities — SVG, PNG, and WAV export for AudioFY.
+ * Export utilities — SVG, PNG, and audio export for AudioFY.
  *
  * SVG: Serializes the scatter plot SVG element to a downloadable file.
  * PNG: Renders the SVG to a canvas and exports as PNG.
- * WAV: Uses Tone.js Recorder to capture audio output and export as WAV.
+ * Audio: Uses Tone.js Recorder to capture audio output (WebM/Opus format).
  */
 import * as Tone from 'tone';
 
@@ -168,42 +168,53 @@ export async function exportPNG(
 }
 
 // ---------------------------------------------------------------------------
-// WAV Export
+// Audio Export
 // ---------------------------------------------------------------------------
 
 /**
- * Export the current sonification as a WAV file using Tone.js Recorder.
+ * Export the current sonification as an audio file using Tone.js Recorder.
  *
- * This re-plays the sonification in real-time while recording the audio
- * output, then saves the result as a WAV file.
+ * Note: Tone.Recorder outputs WebM/Opus format (not WAV). The function name
+ * `exportAudio` reflects the actual output format.
  *
  * @param prepareFn Function that sets up the sonification (add sources, schedule)
  * @param duration Total duration in seconds
  * @param filename Optional custom filename
  * @returns Promise that resolves when the recording and download are complete
  */
-export async function exportWAV(
+export async function exportAudio(
   prepareFn: () => void,
   duration: number,
   filename?: string,
 ): Promise<void> {
+  // Check browser support for MediaRecorder (required by Tone.Recorder)
+  if (typeof MediaRecorder === 'undefined') {
+    throw new Error('Audio export is not supported in this browser (MediaRecorder unavailable)');
+  }
+
   // Create a recorder connected to the Tone.js destination
   const recorder = new Tone.Recorder();
   Tone.getDestination().connect(recorder);
 
+  const transport = Tone.getTransport();
+
   try {
+    // Stop any existing playback first
+    transport.stop();
+    transport.position = 0;
+
     // Prepare the sonification
     prepareFn();
 
     // Start recording and playback
     await recorder.start();
-    Tone.getTransport().start();
+    transport.start();
 
     // Wait for the duration + a small buffer for release tails
     await new Promise<void>((resolve) => {
       setTimeout(
         () => {
-          Tone.getTransport().stop();
+          transport.stop();
           resolve();
         },
         (duration + 0.5) * 1000,
@@ -221,3 +232,8 @@ export async function exportWAV(
     recorder.dispose();
   }
 }
+
+/**
+ * @deprecated Use exportAudio() instead. This alias exists for backward compatibility.
+ */
+export const exportWAV = exportAudio;

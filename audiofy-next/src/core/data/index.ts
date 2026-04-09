@@ -32,7 +32,13 @@ import { computeStats } from './normalization';
 let sourceIdCounter = 0;
 
 function generateSourceId(): string {
-  return `source-${++sourceIdCounter}-${Date.now()}`;
+  sourceIdCounter++;
+  return `source-${sourceIdCounter}-${Date.now()}`;
+}
+
+/** Reset counter (for testing). */
+export function _resetSourceIdCounter(): void {
+  sourceIdCounter = 0;
 }
 
 /** Default color palette for multi-source visualization */
@@ -122,10 +128,10 @@ export function buildDataSource(
         return typeof val === 'number' ? val : 0;
       }),
     )
-    .filter((row) => row.some((v) => v !== 0 || true)); // keep all rows
+    .filter((row) => row.some((v) => v !== 0)); // remove all-zero rows
 
   const id = generateSourceId();
-  const colorIndex = (sourceIdCounter - 1) % DEFAULT_COLORS.length;
+  const colorIndex = (sourceIdCounter % DEFAULT_COLORS.length);
 
   const normalization = options.normalization ?? 'min-max';
 

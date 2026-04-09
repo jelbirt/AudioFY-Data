@@ -24,6 +24,7 @@ import { useAppStore } from '@store';
 
 export function useSyncController(getEngine: () => AudioEngine | null) {
   const controllerRef = useRef<SyncController | null>(null);
+  const unsubRef = useRef<(() => void) | null>(null);
   const syncState = useAppStore((s) => s.syncState);
   const playbackConfig = useAppStore((s) => s.playbackConfig);
   const sources = useAppStore((s) => s.sources);
@@ -43,7 +44,7 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
       });
 
       // Pipe sync state changes into the Zustand store
-      ctrl.onStateChange((state) => {
+      unsubRef.current = ctrl.onStateChange((state) => {
         syncState({
           playbackState: state.playbackState,
           currentTime: state.currentTime,
@@ -83,11 +84,14 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
     if (!ctrl) return;
     ctrl.setSpeed(playbackConfig.speed);
     ctrl.setLoop(playbackConfig.loop);
-  }, [playbackConfig.speed, playbackConfig.loop]);
+    ctrl.setDuration(playbackConfig.duration);
+  }, [playbackConfig.speed, playbackConfig.loop, playbackConfig.duration]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      unsubRef.current?.();
+      unsubRef.current = null;
       controllerRef.current?.dispose();
       controllerRef.current = null;
     };

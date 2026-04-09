@@ -46,8 +46,12 @@ export function normalize(values: number[], mode: NormalizationMode): number[] {
  * Min-max normalization: scales values to [0, 1].
  */
 export function normalizeMinMax(values: number[]): number[] {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  let min = Infinity;
+  let max = -Infinity;
+  for (const v of values) {
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
   const range = max - min;
   if (range === 0) return values.map(() => 0.5);
   return values.map((v) => (v - min) / range);
@@ -79,7 +83,10 @@ export function normalizeRobust(values: number[]): number[] {
  * Handles negative values by shifting to positive range first.
  */
 export function normalizeLog(values: number[]): number[] {
-  const min = Math.min(...values);
+  let min = Infinity;
+  for (const v of values) {
+    if (v < min) min = v;
+  }
   // Shift so all values are >= 1 (log(1) = 0)
   const shifted = values.map((v) => v - min + 1);
   const logged = shifted.map((v) => Math.log(v));
@@ -137,6 +144,8 @@ export function mapToRange(value: number, min: number, max: number): number {
  * This produces perceptually uniform pitch intervals.
  */
 export function mapToFrequencyLog(normalizedValue: number, minHz: number, maxHz: number): number {
+  if (minHz <= 0 || maxHz <= 0) throw new Error('Frequency bounds must be positive');
+  if (minHz > maxHz) [minHz, maxHz] = [maxHz, minHz];
   return minHz * Math.pow(maxHz / minHz, normalizedValue);
 }
 
@@ -148,6 +157,8 @@ export function mapToFrequencyLinear(
   minHz: number,
   maxHz: number,
 ): number {
+  if (minHz <= 0 || maxHz <= 0) throw new Error('Frequency bounds must be positive');
+  if (minHz > maxHz) [minHz, maxHz] = [maxHz, minHz];
   return minHz + normalizedValue * (maxHz - minHz);
 }
 
@@ -160,6 +171,9 @@ export function mapToFrequencyMidi(
   minMidi: number,
   maxMidi: number,
 ): number {
-  const midiNote = Math.round(minMidi + normalizedValue * (maxMidi - minMidi));
+  if (minMidi > maxMidi) [minMidi, maxMidi] = [maxMidi, minMidi];
+  const clampedMin = Math.max(0, Math.min(127, minMidi));
+  const clampedMax = Math.max(0, Math.min(127, maxMidi));
+  const midiNote = Math.round(clampedMin + normalizedValue * (clampedMax - clampedMin));
   return 440 * Math.pow(2, (midiNote - 69) / 12);
 }

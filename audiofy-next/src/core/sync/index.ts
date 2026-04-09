@@ -65,17 +65,20 @@ export interface SyncControllerOptions {
 /**
  * Given sorted notes and a current time, find all notes currently sounding.
  * A note is active if time >= note.time && time < note.time + note.duration.
+ *
+ * Notes MUST be sorted by time for the early-exit optimization.
+ * If unsorted input is suspected, call sortNotesByTime() first.
  */
 export function findActivePoints(notes: ScheduledNote[], currentTime: number): ActivePoint[] {
   const active: ActivePoint[] = [];
 
   for (const note of notes) {
+    // Early exit: all remaining notes are in the future (relies on sorted input)
+    if (note.time > currentTime) break;
+
     if (currentTime >= note.time && currentTime < note.time + note.duration) {
       active.push({ sourceId: note.sourceId, pointIndex: note.pointIndex });
     }
-    // Early exit: if note.time > currentTime, all remaining are in the future
-    // (only valid if notes are sorted by time)
-    if (note.time > currentTime) break;
   }
 
   return active;
@@ -159,8 +162,15 @@ export class SyncController {
     this.updateState({ totalDuration: dur, currentTime: 0, progress: 0 });
 
     // Register engine callbacks for event-driven note tracking
-    this.unsubNoteStart?.();
-    this.unsubNoteEnd?.();
+    // Clean up any existing callbacks from a previous prepare() call
+    if (this.unsubNoteStart) {
+      this.unsubNoteStart();
+      this.unsubNoteStart = null;
+    }
+    if (this.unsubNoteEnd) {
+      this.unsubNoteEnd();
+      this.unsubNoteEnd = null;
+    }
 
     this.unsubNoteStart = this.engine.onNoteStart((sourceId, pointIndex, _time) => {
       const existing = this._state.activePoints;
@@ -278,8 +288,14 @@ export class SyncController {
    */
   dispose(): void {
     this.stopProgressLoop();
-    this.unsubNoteStart?.();
-    this.unsubNoteEnd?.();
+    if (this.unsubNoteStart) {
+      this.unsubNoteStart();
+      this.unsubNoteStart = null;
+    }
+    if (this.unsubNoteEnd) {
+      this.unsubNoteEnd();
+      this.unsubNoteEnd = null;
+    }
     this.listeners = [];
     this.scheduledNotes = [];
   }
@@ -297,7 +313,14 @@ export class SyncController {
     const tick = () => {
       if (this._state.playbackState !== 'playing') return;
 
-      const currentTime = this.engine.getCurrentTime();
+      let currentTime: number;
+      try {
+        currentTime = this.engine.getCurrentTime();
+      } catch {
+        // Engine may have been disposed mid-playback
+        this.stop();
+        return;
+      }
       const progress = computeProgress(currentTime, this._state.totalDuration);
 
       // Determine active points from the scheduled notes

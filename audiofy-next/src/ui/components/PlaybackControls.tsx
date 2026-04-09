@@ -36,8 +36,6 @@ function formatTime(seconds: number): string {
 }
 
 export function PlaybackControls({
-  onPlay: _onPlay,
-  onPause: _onPause,
   onStop,
   onTogglePlayPause,
   onSeekProgress,

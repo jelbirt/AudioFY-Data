@@ -29,7 +29,6 @@ const SUPPORTED_EXTENSIONS = ['xlsx', 'xls', 'csv', 'tsv', 'ods', 'json'];
 
 export function useFileImport() {
   const addSource = useAppStore((s) => s.addSource);
-  const recentFiles = useAppStore((s) => s.recentFiles);
   const setRecentFiles = useAppStore((s) => s.setRecentFiles);
   const setError = useAppStore((s) => s.setError);
   const setLoading = useAppStore((s) => s.setLoading);
@@ -46,9 +45,10 @@ export function useFileImport() {
         const { parsedFile, source } = createDataSource(buffer, fileName);
         addSource(source, parsedFile);
 
-        // Update recent files
+        // Update recent files — read fresh state to avoid stale closure
         if (filePath) {
-          const updated = addRecentFile(recentFiles, filePath, fileName);
+          const currentRecentFiles = useAppStore.getState().recentFiles;
+          const updated = addRecentFile(currentRecentFiles, filePath, fileName);
           setRecentFiles(updated);
         }
       } catch (err) {
@@ -58,7 +58,7 @@ export function useFileImport() {
         setLoading(false);
       }
     },
-    [addSource, recentFiles, setRecentFiles, setError, setLoading],
+    [addSource, setRecentFiles, setError, setLoading],
   );
 
   /**
@@ -118,6 +118,8 @@ export function useFileImport() {
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to read file';
         setError(message);
+      } finally {
+        setLoading(false);
       }
     };
 
