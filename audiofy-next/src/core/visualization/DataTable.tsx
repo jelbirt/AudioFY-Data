@@ -1,3 +1,19 @@
+// AudioFY — Data Sonification & Visualization
+// Copyright (C) 2026 Jordan Elbirt
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * DataTable — Synchronized data table with row highlighting during playback,
  * auto-scroll, color-coded source columns, sortable headers, and column stats.
@@ -198,6 +214,8 @@ export function DataTable({
           borderCollapse: 'collapse',
           tableLayout: 'fixed',
         }}
+        role="grid"
+        aria-label={`Data table with ${rows.length} rows and ${columnHeaders.length} columns`}
       >
         <thead
           style={{
@@ -234,6 +252,21 @@ export function DataTable({
               <th
                 key={i}
                 onClick={() => handleSort(i)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSort(i);
+                  }
+                }}
+                role="columnheader"
+                aria-sort={
+                  sort.columnIndex === i
+                    ? sort.direction === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                }
+                tabIndex={0}
                 style={{
                   padding: '6px 8px',
                   textAlign: 'right',

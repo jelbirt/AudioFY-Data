@@ -1,3 +1,19 @@
+// AudioFY — Data Sonification & Visualization
+// Copyright (C) 2026 Jordan Elbirt
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Audio Engine — wraps Tone.js for data sonification.
  *
@@ -411,11 +427,12 @@ function mapFrequency(normalizedValue: number, mapping: AudioMapping): number {
       return mapToFrequencyLog(clamped, minHz, maxHz);
     case 'linear':
       return mapToFrequencyLinear(clamped, minHz, maxHz);
-    case 'midi':
+    case 'midi': {
       // Convert Hz range to approximate MIDI range
       const minMidi = Math.round(12 * Math.log2(minHz / 440) + 69);
       const maxMidi = Math.round(12 * Math.log2(maxHz / 440) + 69);
       return mapToFrequencyMidi(clamped, minMidi, maxMidi);
+    }
     default:
       return mapToFrequencyLog(clamped, minHz, maxHz);
   }

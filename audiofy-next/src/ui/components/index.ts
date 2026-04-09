@@ -14,11 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-/**
- * Visualization Engine — re-exports all visualization components and utilities.
- */
-export { ScatterPlot, flattenSources, isPointActive } from './ScatterPlot';
-export type { ScatterPlotProps } from './ScatterPlot';
-
-export { DataTable, buildTableRows, sortRows, isRowActive } from './DataTable';
-export type { DataTableProps, TableRow } from './DataTable';
+export { Toolbar } from './Toolbar';
+export { PlaybackControls } from './PlaybackControls';
+export { SourceList } from './SourceList';
+export { SettingsPanel } from './SettingsPanel';
