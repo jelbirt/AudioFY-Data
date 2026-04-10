@@ -178,6 +178,7 @@ function extractNumericColumn(data: (string | number | null)[][], colIndex: numb
  * Re-export for convenience.
  */
 export { parseFile } from './parser';
+export { parseFileAsync, terminateParseWorker } from './parseAsync';
 export {
   normalize,
   computeStats,

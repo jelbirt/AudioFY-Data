@@ -18,7 +18,7 @@
  * DataTable — Synchronized data table with row highlighting during playback,
  * auto-scroll, color-coded source columns, sortable headers, and column stats.
  */
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from 'react';
 import type { DataSource, ActivePoint, VisualizationConfig } from '@types';
 
 // ---------------------------------------------------------------------------
@@ -107,6 +107,13 @@ export function isRowActive(row: TableRow, activePoints: ActivePoint[]): boolean
 // Component
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Virtualization constants
+// ---------------------------------------------------------------------------
+
+const ROW_HEIGHT = 28; // px — fixed row height for virtual scroll
+const OVERSCAN = 10; // extra rows rendered above/below viewport
+
 export function DataTable({
   sources,
   activePoints,
@@ -114,10 +121,10 @@ export function DataTable({
   maxHeight,
   onRowClick,
 }: DataTableProps) {
-  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
-  const activeRowRef = useRef<HTMLTableRowElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<SortState>({ columnIndex: null, direction: null });
   const [showStats, setShowStats] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
 
   // Build and sort rows
   const rawRows = useMemo(() => buildTableRows(sources), [sources]);
@@ -139,26 +146,49 @@ export function DataTable({
     return sources[0].columns.map((c) => c.stats);
   }, [sources]);
 
+  // Virtualization calculations
+  const headerHeight = 34; // thead height approximation
+  const statsToggleHeight = 26; // stats button height
+  const viewportHeight = maxHeight - headerHeight - statsToggleHeight;
+  const visibleRowCount = Math.ceil(viewportHeight / ROW_HEIGHT);
+
+  const startIdx = useMemo(() => {
+    const raw = Math.floor(scrollTop / ROW_HEIGHT);
+    return Math.max(0, raw - OVERSCAN);
+  }, [scrollTop]);
+
+  const endIdx = useMemo(() => {
+    const raw = Math.floor(scrollTop / ROW_HEIGHT) + visibleRowCount;
+    return Math.min(rows.length, raw + OVERSCAN);
+  }, [scrollTop, visibleRowCount, rows.length]);
+
+  const visibleRows = useMemo(() => rows.slice(startIdx, endIdx), [rows, startIdx, endIdx]);
+
   // Auto-scroll to active row during playback
   useEffect(() => {
-    if (activeRowRef.current && tableBodyRef.current) {
-      const row = activeRowRef.current;
-      const container = tableBodyRef.current.parentElement;
-      if (!container) return;
+    if (activePoints.length === 0 || !containerRef.current) return;
 
-      const rowTop = row.offsetTop - container.offsetTop;
-      const rowBottom = rowTop + row.offsetHeight;
-      const scrollTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
+    // Find the first active row index in the sorted list
+    const activeIdx = rows.findIndex((row) => isRowActive(row, activePoints));
+    if (activeIdx === -1) return;
 
-      if (rowTop < scrollTop || rowBottom > scrollTop + containerHeight) {
-        container.scrollTo({
-          top: rowTop - containerHeight / 2 + row.offsetHeight / 2,
-          behavior: 'smooth',
-        });
-      }
+    const rowTop = activeIdx * ROW_HEIGHT;
+    const rowBottom = rowTop + ROW_HEIGHT;
+    const container = containerRef.current;
+    const currentScrollTop = container.scrollTop;
+
+    if (rowTop < currentScrollTop || rowBottom > currentScrollTop + viewportHeight) {
+      container.scrollTo({
+        top: rowTop - viewportHeight / 2 + ROW_HEIGHT / 2,
+        behavior: 'smooth',
+      });
     }
-  }, [activePoints]);
+  }, [activePoints, rows, viewportHeight]);
+
+  // Scroll handler
+  const handleScroll = useCallback((e: UIEvent<HTMLDivElement>) => {
+    setScrollTop((e.target as HTMLDivElement).scrollTop);
+  }, []);
 
   // Sort handler
   const handleSort = useCallback((colIndex: number) => {
@@ -191,9 +221,14 @@ export function DataTable({
     );
   }
 
+  const topPadding = startIdx * ROW_HEIGHT;
+  const bottomPadding = Math.max(0, (rows.length - endIdx) * ROW_HEIGHT);
+
   return (
     <div
       className="data-table-container"
+      ref={containerRef}
+      onScroll={handleScroll}
       style={{
         maxHeight,
         overflow: 'auto',
@@ -214,6 +249,7 @@ export function DataTable({
         }}
         role="grid"
         aria-label={`Data table with ${rows.length} rows and ${columnHeaders.length} columns`}
+        aria-rowcount={rows.length}
       >
         <thead
           style={{
@@ -286,20 +322,29 @@ export function DataTable({
           </tr>
         </thead>
 
-        <tbody ref={tableBodyRef}>
-          {rows.map((row, rowIdx) => {
+        <tbody>
+          {/* Virtual spacer — top */}
+          {topPadding > 0 && (
+            <tr aria-hidden="true">
+              <td style={{ height: topPadding, padding: 0, border: 'none' }} />
+            </tr>
+          )}
+
+          {visibleRows.map((row, i) => {
+            const absoluteIdx = startIdx + i;
             const active = isRowActive(row, activePoints);
             return (
               <tr
                 key={`${row.sourceId}-${row.pointIndex}`}
-                ref={active ? activeRowRef : undefined}
                 onClick={() => onRowClick?.(row.sourceId, row.pointIndex)}
+                aria-rowindex={absoluteIdx + 1}
                 style={{
+                  height: ROW_HEIGHT,
                   background: active
                     ? isDark
                       ? 'rgba(100,100,255,0.3)'
                       : 'rgba(66,133,244,0.15)'
-                    : rowIdx % 2 === 0
+                    : absoluteIdx % 2 === 0
                       ? 'transparent'
                       : isDark
                         ? 'rgba(255,255,255,0.03)'
@@ -356,6 +401,13 @@ export function DataTable({
               </tr>
             );
           })}
+
+          {/* Virtual spacer — bottom */}
+          {bottomPadding > 0 && (
+            <tr aria-hidden="true">
+              <td style={{ height: bottomPadding, padding: 0, border: 'none' }} />
+            </tr>
+          )}
         </tbody>
 
         {/* Stats footer */}

@@ -152,11 +152,14 @@ export function ScatterPlot({
   );
 
   // -----------------------------------------------------------------------
-  // Initial SVG setup (axes, groups, zoom)
+  // Initial SVG setup (structure, axes, grid, zoom)
+  // Only rebuilds when dimensions or theme/grid config changes — NOT on
+  // data/source changes (those are handled by the points effect below).
   // -----------------------------------------------------------------------
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove(); // clear on full re-init
+    currentTransformRef.current = d3.zoomIdentity;
 
     const isDark = config.theme === 'dark';
     const textColor = isDark ? '#e0e0e0' : '#333';
@@ -224,36 +227,23 @@ export function ScatterPlot({
     // Style axis lines
     g.selectAll('.x-axis path, .x-axis line, .y-axis path, .y-axis line').attr('stroke', textColor);
 
-    // Axis labels
-    const xLabel = sources[0]?.columns.find(
-      (c) => c.index === sources[0]?.audioMapping.xColumn,
-    )?.name;
-    const yLabel = sources[0]?.columns.find(
-      (c) => c.index === sources[0]?.audioMapping.yColumn,
-    )?.name;
+    // Axis label placeholders (updated by a separate lightweight effect)
+    g.append('text')
+      .attr('class', 'axis-label x-label')
+      .attr('x', innerWidth / 2)
+      .attr('y', innerHeight + MARGIN.bottom - 8)
+      .attr('text-anchor', 'middle')
+      .attr('fill', textColor)
+      .attr('font-size', '13px');
 
-    if (xLabel) {
-      g.append('text')
-        .attr('class', 'axis-label x-label')
-        .attr('x', innerWidth / 2)
-        .attr('y', innerHeight + MARGIN.bottom - 8)
-        .attr('text-anchor', 'middle')
-        .attr('fill', textColor)
-        .attr('font-size', '13px')
-        .text(xLabel);
-    }
-
-    if (yLabel) {
-      g.append('text')
-        .attr('class', 'axis-label y-label')
-        .attr('x', -innerHeight / 2)
-        .attr('y', -MARGIN.left + 16)
-        .attr('text-anchor', 'middle')
-        .attr('transform', 'rotate(-90)')
-        .attr('fill', textColor)
-        .attr('font-size', '13px')
-        .text(yLabel);
-    }
+    g.append('text')
+      .attr('class', 'axis-label y-label')
+      .attr('x', -innerHeight / 2)
+      .attr('y', -MARGIN.left + 16)
+      .attr('text-anchor', 'middle')
+      .attr('transform', 'rotate(-90)')
+      .attr('fill', textColor)
+      .attr('font-size', '13px');
 
     // Points group (clipped)
     g.append('g').attr('class', 'points-group').attr('clip-path', 'url(#plot-clip)');
@@ -304,19 +294,46 @@ export function ScatterPlot({
     zoomRef.current = zoom;
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sources, config.theme, config.showGrid, innerWidth, innerHeight]);
+  }, [config.theme, config.showGrid, innerWidth, innerHeight]);
 
   // -----------------------------------------------------------------------
-  // Render / update points (runs when data or active state changes)
+  // Axis labels — lightweight update when sources/columns change
   // -----------------------------------------------------------------------
   useEffect(() => {
     const svg = d3.select(svgRef.current);
+
+    const xLabel = sources[0]?.columns.find(
+      (c) => c.index === sources[0]?.audioMapping.xColumn,
+    )?.name ?? '';
+    const yLabel = sources[0]?.columns.find(
+      (c) => c.index === sources[0]?.audioMapping.yColumn,
+    )?.name ?? '';
+
+    svg.select('.x-label').text(xLabel);
+    svg.select('.y-label').text(yLabel);
+  }, [sources]);
+
+  // -----------------------------------------------------------------------
+  // Render / update points + refresh axes when data or scales change
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+    const g = svg.select('.plot-root');
     const pointsGroup = svg.select('.points-group');
     if (pointsGroup.empty()) return;
 
     const t = currentTransformRef.current;
     const scaledX = t.rescaleX(xScale);
     const scaledY = t.rescaleY(yScale);
+
+    // Refresh axes to match current scales (data may have changed domains)
+    const isDark = config.theme === 'dark';
+    const textColor = isDark ? '#e0e0e0' : '#333';
+
+    g.select<SVGGElement>('.x-axis').call(d3.axisBottom(scaledX));
+    g.select<SVGGElement>('.y-axis').call(d3.axisLeft(scaledY));
+    g.selectAll('.x-axis text, .y-axis text').attr('fill', textColor);
+    g.selectAll('.x-axis path, .x-axis line, .y-axis path, .y-axis line').attr('stroke', textColor);
 
     const baseR = config.pointSize;
 
@@ -379,7 +396,7 @@ export function ScatterPlot({
       });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, config.pointSize, xScale, yScale]);
+  }, [points, config.pointSize, config.theme, xScale, yScale]);
 
   // -----------------------------------------------------------------------
   // Highlight active points (fast updates during playback)

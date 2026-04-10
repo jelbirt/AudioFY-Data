@@ -20,8 +20,8 @@
  * Falls back to an <input type="file"> in development/browser context.
  */
 import { useCallback, useEffect, useRef } from 'react';
-import { createDataSource } from '@core/data';
-import { parseFile } from '@core/data';
+import { buildDataSource } from '@core/data';
+import { parseFileAsync } from '@core/data';
 import { addRecentFile } from '@core/config';
 import { useAppStore } from '@store';
 
@@ -50,7 +50,7 @@ export function useFileImport() {
       setError(null);
 
       try {
-        const parsedFile = parseFile(buffer, fileName);
+        const parsedFile = await parseFileAsync(buffer, fileName);
 
         if (parsedFile.sheets.length > 1) {
           // Multi-sheet file — show import preview for user to pick
@@ -59,8 +59,8 @@ export function useFileImport() {
           return;
         }
 
-        // Single sheet — import directly
-        const { source } = createDataSource(buffer, fileName);
+        // Single sheet — import directly using the already-parsed data
+        const source = buildDataSource(parsedFile.sheets[0], fileName);
         addSource(source, parsedFile);
 
         // Update recent files — read fresh state to avoid stale closure
