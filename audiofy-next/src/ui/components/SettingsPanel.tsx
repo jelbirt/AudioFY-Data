@@ -431,6 +431,105 @@ export function SettingsPanel() {
           </div>
         )}
       </div>
+
+      <div className="setting-group">
+        <div className="setting-row">
+          <label htmlFor="setting-chorus">Chorus</label>
+          <input
+            id="setting-chorus"
+            type="checkbox"
+            className="setting-checkbox"
+            checked={audioConfig.effects.chorus.enabled}
+            onChange={(e) =>
+              updateAudioConfig({
+                effects: {
+                  ...audioConfig.effects,
+                  chorus: { ...audioConfig.effects.chorus, enabled: e.target.checked },
+                },
+              })
+            }
+          />
+        </div>
+        {audioConfig.effects.chorus.enabled && (
+          <>
+            <div className="setting-row">
+              <label htmlFor="setting-chorus-freq" style={{ fontSize: 11 }}>
+                Rate: {audioConfig.effects.chorus.frequency.toFixed(1)} Hz
+              </label>
+              <input
+                id="setting-chorus-freq"
+                type="range"
+                className="setting-range"
+                min={1}
+                max={100}
+                value={Math.round(audioConfig.effects.chorus.frequency * 10)}
+                aria-label={`Chorus rate: ${audioConfig.effects.chorus.frequency.toFixed(1)} Hz`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      chorus: {
+                        ...audioConfig.effects.chorus,
+                        frequency: parseInt(e.target.value) / 10,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="setting-row">
+              <label htmlFor="setting-chorus-depth" style={{ fontSize: 11 }}>
+                Depth: {audioConfig.effects.chorus.depth.toFixed(1)}
+              </label>
+              <input
+                id="setting-chorus-depth"
+                type="range"
+                className="setting-range"
+                min={0}
+                max={100}
+                value={Math.round(audioConfig.effects.chorus.depth * 100)}
+                aria-label={`Chorus depth: ${audioConfig.effects.chorus.depth.toFixed(1)}`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      chorus: {
+                        ...audioConfig.effects.chorus,
+                        depth: parseInt(e.target.value) / 100,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="setting-row">
+              <label htmlFor="setting-chorus-delay" style={{ fontSize: 11 }}>
+                Delay: {audioConfig.effects.chorus.delayTime.toFixed(1)} ms
+              </label>
+              <input
+                id="setting-chorus-delay"
+                type="range"
+                className="setting-range"
+                min={2}
+                max={200}
+                value={Math.round(audioConfig.effects.chorus.delayTime * 10)}
+                aria-label={`Chorus delay: ${audioConfig.effects.chorus.delayTime.toFixed(1)} ms`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      chorus: {
+                        ...audioConfig.effects.chorus,
+                        delayTime: parseInt(e.target.value) / 10,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

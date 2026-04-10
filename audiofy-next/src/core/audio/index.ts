@@ -20,5 +20,4 @@ export type {
   SourceChannel,
   ScheduledNote,
   NoteCallback,
-  ProgressCallback,
 } from './engine';

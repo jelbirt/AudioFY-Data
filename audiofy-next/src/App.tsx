@@ -27,7 +27,7 @@ import { SourceList } from '@ui/components/SourceList';
 import { SettingsPanel } from '@ui/components/SettingsPanel';
 import { ScatterPlot } from '@core/visualization/ScatterPlot';
 import { DataTable } from '@core/visualization/DataTable';
-import { exportSVG, exportPNG, exportWAV } from '@core/export';
+import { exportSVG, exportPNG, exportAudio } from '@core/export';
 import '@ui/styles/app.css';
 
 // ---------------------------------------------------------------------------
@@ -180,6 +180,27 @@ export default function App() {
   );
   useKeyboardShortcuts(shortcutHandlers);
 
+  // --- Chart / table interaction handlers ---
+  const handlePointClick = useCallback(
+    (sourceId: string, pointIndex: number) => {
+      const source = useAppStore.getState().sources.find((s) => s.id === sourceId);
+      if (!source || source.rows.length === 0) return;
+      const p = pointIndex / source.rows.length;
+      sync.seekProgress(Math.max(0, Math.min(1, p)));
+    },
+    [sync],
+  );
+
+  const handleRowClick = useCallback(
+    (sourceId: string, pointIndex: number) => {
+      const source = useAppStore.getState().sources.find((s) => s.id === sourceId);
+      if (!source || source.rows.length === 0) return;
+      const p = pointIndex / source.rows.length;
+      sync.seekProgress(Math.max(0, Math.min(1, p)));
+    },
+    [sync],
+  );
+
   // --- Drag state ---
   const [dragOver, setDragOver] = useState(false);
 
@@ -233,11 +254,11 @@ export default function App() {
     }
   }, [getSvgElement, setError]);
 
-  const handleExportWAV = useCallback(async () => {
+  const handleExportAudio = useCallback(async () => {
     try {
       await initialize();
       const duration = playbackConfig.duration;
-      await exportWAV(() => sync.prepare(), duration);
+      await exportAudio(() => sync.prepare(), duration);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audio export failed');
     }
@@ -286,14 +307,12 @@ export default function App() {
         {/* Toolbar */}
         <Toolbar
           onOpenFile={openFileDialog}
-          onPlay={handlePlay}
-          onPause={() => sync.pause()}
           onStop={handleStop}
           onTogglePlayPause={handleTogglePlayPause}
           onSeekProgress={(p) => sync.seekProgress(p)}
           onExportSVG={handleExportSVG}
           onExportPNG={handleExportPNG}
-          onExportWAV={handleExportWAV}
+          onExportAudio={handleExportAudio}
         />
 
         {/* Body */}
@@ -339,6 +358,7 @@ export default function App() {
                     config={visualizationConfig}
                     width={chartSize.width}
                     height={chartSize.height}
+                    onPointClick={handlePointClick}
                   />
                 </ErrorBoundary>
               )}
@@ -365,6 +385,7 @@ export default function App() {
                     activePoints={activePoints}
                     config={visualizationConfig}
                     maxHeight={250}
+                    onRowClick={handleRowClick}
                   />
                 </ErrorBoundary>
               </div>

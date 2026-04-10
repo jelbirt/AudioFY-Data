@@ -21,8 +21,6 @@ import { useCallback } from 'react';
 import { useAppStore } from '@store';
 
 interface PlaybackControlsProps {
-  onPlay: () => void;
-  onPause: () => void;
   onStop: () => void;
   onTogglePlayPause: () => void;
   onSeekProgress: (progress: number) => void;

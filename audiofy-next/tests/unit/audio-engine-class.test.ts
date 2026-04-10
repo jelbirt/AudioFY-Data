@@ -57,11 +57,16 @@ vi.mock('tone', () => {
     schedule: vi.fn((_cb: unknown, _time: unknown) => {}),
   };
 
+  class MockChorus extends MockNode {
+    start = vi.fn().mockReturnThis();
+  }
+
   return {
     start: vi.fn().mockResolvedValue(undefined),
     Gain: MockNode,
     Reverb: MockNode,
     Filter: MockNode,
+    Chorus: MockChorus,
     Panner: MockNode,
     Synth: MockNode,
     PolySynth: MockNode,
@@ -395,12 +400,7 @@ describe('AudioEngine', () => {
       unsub();
     });
 
-    it('onProgress registers and returns unsubscribe', () => {
-      const cb = vi.fn();
-      const unsub = engine.onProgress(cb);
-      expect(typeof unsub).toBe('function');
-      unsub();
-    });
+    // onProgress was removed — the engine no longer exposes that callback.
   });
 
   describe('dispose', () => {

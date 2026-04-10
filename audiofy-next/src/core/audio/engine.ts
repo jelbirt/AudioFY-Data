@@ -49,18 +49,17 @@ export interface ScheduledNote {
 }
 
 export type NoteCallback = (sourceId: string, pointIndex: number, time: number) => void;
-export type ProgressCallback = (progress: number, time: number) => void;
 
 export class AudioEngine {
   private channels: Map<string, SourceChannel> = new Map();
   private masterGain: Tone.Gain | null = null;
   private reverb: Tone.Reverb | null = null;
+  private chorus: Tone.Chorus | null = null;
   private filter: Tone.Filter | null = null;
   private scheduledEvents: number[] = [];
   private _state: AudioEngineState = 'uninitialized';
   private _onNoteStart: NoteCallback[] = [];
   private _onNoteEnd: NoteCallback[] = [];
-  private _onProgress: ProgressCallback[] = [];
   private _totalDuration = 0;
 
   get state(): AudioEngineState {
@@ -87,7 +86,10 @@ export class AudioEngine {
 
     this.masterGain = new Tone.Gain(0.8).toDestination();
     this.reverb = new Tone.Reverb({ decay: 2, wet: 0 }).connect(this.masterGain);
-    this.filter = new Tone.Filter({ frequency: 20000, type: 'lowpass' }).connect(this.reverb);
+    this.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 })
+      .connect(this.reverb)
+      .start();
+    this.filter = new Tone.Filter({ frequency: 20000, type: 'lowpass' }).connect(this.chorus);
 
     this._state = 'ready';
   }
@@ -179,6 +181,14 @@ export class AudioEngine {
   setEffects(config: EffectsConfig): void {
     if (this.reverb) {
       this.reverb.wet.value = config.reverb.enabled ? config.reverb.wet : 0;
+    }
+    if (this.chorus && config.chorus) {
+      this.chorus.wet.value = config.chorus.enabled ? 1 : 0;
+      if (config.chorus.enabled) {
+        this.chorus.frequency.value = config.chorus.frequency;
+        this.chorus.delayTime = config.chorus.delayTime;
+        this.chorus.depth = config.chorus.depth;
+      }
     }
     if (this.filter) {
       this.filter.frequency.value = config.filter.enabled ? config.filter.frequency : 20000;
@@ -312,13 +322,6 @@ export class AudioEngine {
     };
   }
 
-  onProgress(callback: ProgressCallback): () => void {
-    this._onProgress.push(callback);
-    return () => {
-      this._onProgress = this._onProgress.filter((cb) => cb !== callback);
-    };
-  }
-
   /**
    * Get current playback position in seconds.
    */
@@ -338,11 +341,11 @@ export class AudioEngine {
     }
     this.channels.clear();
     this.reverb?.dispose();
+    this.chorus?.dispose();
     this.filter?.dispose();
     this.masterGain?.dispose();
     this._onNoteStart = [];
     this._onNoteEnd = [];
-    this._onProgress = [];
     this._state = 'disposed';
   }
 

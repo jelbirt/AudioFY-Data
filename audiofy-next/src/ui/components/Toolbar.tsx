@@ -22,26 +22,22 @@ import { useAppStore } from '@store';
 
 interface ToolbarProps {
   onOpenFile: () => void;
-  onPlay: () => void;
-  onPause: () => void;
   onStop: () => void;
   onTogglePlayPause: () => void;
   onSeekProgress: (progress: number) => void;
   onExportSVG: () => void;
   onExportPNG: () => void;
-  onExportWAV: () => void;
+  onExportAudio: () => void;
 }
 
 export function Toolbar({
   onOpenFile,
-  onPlay,
-  onPause,
   onStop,
   onTogglePlayPause,
   onSeekProgress,
   onExportSVG,
   onExportPNG,
-  onExportWAV,
+  onExportAudio,
 }: ToolbarProps) {
   const toggleSettingsPanel = useAppStore((s) => s.toggleSettingsPanel);
   const settingsPanelOpen = useAppStore((s) => s.settingsPanelOpen);
@@ -59,8 +55,6 @@ export function Toolbar({
       <div className="toolbar-separator" aria-hidden="true" />
 
       <PlaybackControls
-        onPlay={onPlay}
-        onPause={onPause}
         onStop={onStop}
         onTogglePlayPause={onTogglePlayPause}
         onSeekProgress={onSeekProgress}
@@ -89,9 +83,9 @@ export function Toolbar({
         </button>
         <button
           className="btn"
-          onClick={onExportWAV}
+          onClick={onExportAudio}
           disabled={!hasData}
-          title="Export audio as WAV"
+          title="Export audio (WebM/Opus)"
           aria-label="Export audio"
         >
           Audio

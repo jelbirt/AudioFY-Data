@@ -249,7 +249,3 @@ export async function exportAudio(
   }
 }
 
-/**
- * @deprecated Use exportAudio() instead. This alias exists for backward compatibility.
- */
-export const exportWAV = exportAudio;
