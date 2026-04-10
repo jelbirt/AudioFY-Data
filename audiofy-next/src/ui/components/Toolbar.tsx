@@ -28,6 +28,8 @@ interface ToolbarProps {
   onExportSVG: () => void;
   onExportPNG: () => void;
   onExportAudio: () => void;
+  onSaveProject: () => void;
+  onLoadProject: () => void;
 }
 
 export function Toolbar({
@@ -38,6 +40,8 @@ export function Toolbar({
   onExportSVG,
   onExportPNG,
   onExportAudio,
+  onSaveProject,
+  onLoadProject,
 }: ToolbarProps) {
   const toggleSettingsPanel = useAppStore((s) => s.toggleSettingsPanel);
   const settingsPanelOpen = useAppStore((s) => s.settingsPanelOpen);
@@ -49,6 +53,12 @@ export function Toolbar({
       <div className="toolbar-group">
         <button className="btn" onClick={onOpenFile} title="Open file (Ctrl+O)">
           Open File
+        </button>
+        <button className="btn" onClick={onSaveProject} disabled={!hasData} title="Save project (Ctrl+S)">
+          Save
+        </button>
+        <button className="btn" onClick={onLoadProject} title="Load project">
+          Load
         </button>
       </div>
 

@@ -25,9 +25,13 @@ import { useAudioEngine, useSyncController, useFileImport, useKeyboardShortcuts 
 import { Toolbar } from '@ui/components/Toolbar';
 import { SourceList } from '@ui/components/SourceList';
 import { SettingsPanel } from '@ui/components/SettingsPanel';
+import { ImportPreviewModal } from '@ui/components/ImportPreviewModal';
 import { ScatterPlot } from '@core/visualization/ScatterPlot';
 import { DataTable } from '@core/visualization/DataTable';
 import { exportSVG, exportPNG, exportAudio } from '@core/export';
+import { buildDataSource } from '@core/data';
+import { serializeConfig, validateConfig } from '@core/config';
+import type { AudioFYConfig, SourceConfig } from '@types';
 import '@ui/styles/app.css';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +105,9 @@ export default function App() {
   const loading = useAppStore((s) => s.loading);
   const setError = useAppStore((s) => s.setError);
   const toggleSettingsPanel = useAppStore((s) => s.toggleSettingsPanel);
+  const pendingImport = useAppStore((s) => s.pendingImport);
+  const setPendingImport = useAppStore((s) => s.setPendingImport);
+  const addSource = useAppStore((s) => s.addSource);
 
   // --- Engine & Sync ---
   const { initialize, getEngine } = useAudioEngine();
@@ -168,6 +175,73 @@ export default function App() {
     }
   }, [handlePlay, sync]);
 
+  // --- Save / Load project ---
+  const updatePlaybackConfig = useAppStore((s) => s.updatePlaybackConfig);
+  const updateVisualizationConfig = useAppStore((s) => s.updateVisualizationConfig);
+  const updateAudioConfig = useAppStore((s) => s.updateAudioConfig);
+
+  const handleSaveProject = useCallback(() => {
+    const state = useAppStore.getState();
+    const sourceConfigs: SourceConfig[] = state.sources.map((s) => ({
+      filePath: s.fileName,
+      sheetName: s.sheetName,
+      xColumn: s.audioMapping.xColumn,
+      yColumn: s.audioMapping.yColumn,
+      color: s.color,
+      normalization: s.normalization,
+      audioMapping: s.audioMapping,
+    }));
+
+    const config: AudioFYConfig = {
+      version: 2,
+      sources: sourceConfigs,
+      playback: state.playbackConfig,
+      visualization: state.visualizationConfig,
+      audio: state.audioConfig,
+    };
+
+    const json = serializeConfig(config);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audiofy-project.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleLoadProject = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const result = validateConfig(text);
+
+        if (!result.success || !result.config) {
+          setError(`Invalid project file: ${result.errors.join(', ')}`);
+          return;
+        }
+
+        const config = result.config;
+
+        // Restore playback, visualization, and audio config
+        updatePlaybackConfig(config.playback);
+        updateVisualizationConfig(config.visualization);
+        updateAudioConfig(config.audio);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load project');
+      }
+    };
+
+    input.click();
+  }, [setError, updatePlaybackConfig, updateVisualizationConfig, updateAudioConfig]);
+
   // --- Keyboard shortcuts ---
   const shortcutHandlers = useMemo(
     () => ({
@@ -175,8 +249,9 @@ export default function App() {
       stop: handleStop,
       openFile: openFileDialog,
       toggleSettings: toggleSettingsPanel,
+      saveProject: handleSaveProject,
     }),
-    [handleTogglePlayPause, handleStop, openFileDialog, toggleSettingsPanel],
+    [handleTogglePlayPause, handleStop, openFileDialog, toggleSettingsPanel, handleSaveProject],
   );
   useKeyboardShortcuts(shortcutHandlers);
 
@@ -221,6 +296,27 @@ export default function App() {
     },
     [handleDrop],
   );
+
+  // --- Import preview handlers ---
+  const handleConfirmImport = useCallback(
+    (sheetIndex: number) => {
+      if (!pendingImport) return;
+      const { parsedFile, fileName } = pendingImport;
+      try {
+        const sheet = parsedFile.sheets[sheetIndex];
+        const source = buildDataSource(sheet, fileName);
+        addSource(source, parsedFile);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to import sheet');
+      }
+      setPendingImport(null);
+    },
+    [pendingImport, addSource, setError, setPendingImport],
+  );
+
+  const handleCancelImport = useCallback(() => {
+    setPendingImport(null);
+  }, [setPendingImport]);
 
   // --- Export handlers ---
   const getSvgElement = useCallback((): SVGSVGElement | null => {
@@ -313,6 +409,8 @@ export default function App() {
           onExportSVG={handleExportSVG}
           onExportPNG={handleExportPNG}
           onExportAudio={handleExportAudio}
+          onSaveProject={handleSaveProject}
+          onLoadProject={handleLoadProject}
         />
 
         {/* Body */}
@@ -392,6 +490,15 @@ export default function App() {
             )}
           </main>
         </div>
+
+        {/* Import Preview Modal */}
+        {pendingImport && (
+          <ImportPreviewModal
+            pending={pendingImport}
+            onConfirm={handleConfirmImport}
+            onCancel={handleCancelImport}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );

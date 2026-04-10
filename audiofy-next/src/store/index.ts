@@ -35,6 +35,13 @@ import type {
   OscillatorType,
   ADSR,
 } from '@types';
+
+/** Represents a file that has been parsed but awaits user sheet selection. */
+export interface PendingImport {
+  parsedFile: ParsedFile;
+  fileName: string;
+  filePath?: string;
+}
 import type { RecentFile } from '@core/config';
 import { DEFAULT_PLAYBACK, DEFAULT_VISUALIZATION, DEFAULT_AUDIO } from '@core/config';
 
@@ -67,6 +74,9 @@ export interface AppState {
   recentFiles: RecentFile[];
   error: string | null;
   loading: boolean;
+
+  // --- Import ---
+  pendingImport: PendingImport | null;
 }
 
 export interface AppActions {
@@ -102,6 +112,9 @@ export interface AppActions {
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
 
+  // --- Import ---
+  setPendingImport: (pending: PendingImport | null) => void;
+
   // --- Batch sync state update ---
   syncState: (patch: {
     playbackState?: PlaybackState;
@@ -134,6 +147,7 @@ export const useAppStore = create<AppStore>((set) => ({
   recentFiles: [],
   error: null,
   loading: false,
+  pendingImport: null,
 
   // --- Actions ---
 
@@ -241,6 +255,7 @@ export const useAppStore = create<AppStore>((set) => ({
   setRecentFiles: (recentFiles) => set({ recentFiles }),
   setError: (error) => set({ error }),
   setLoading: (loading) => set({ loading }),
+  setPendingImport: (pendingImport) => set({ pendingImport }),
 
   syncState: (patch) => set(patch),
 }));

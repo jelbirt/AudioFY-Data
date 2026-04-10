@@ -62,6 +62,50 @@ export function SettingsPanel() {
           <div className="sidebar-section-title">Source: {selectedSource.name}</div>
 
           <div className="setting-group">
+            <label className="setting-label" htmlFor="setting-x-column">
+              X Column
+            </label>
+            <select
+              id="setting-x-column"
+              className="setting-select"
+              value={selectedSource.audioMapping.xColumn}
+              onChange={(e) =>
+                updateSourceMapping(selectedSource.id, {
+                  xColumn: parseInt(e.target.value),
+                })
+              }
+            >
+              {selectedSource.columns.map((col) => (
+                <option key={col.index} value={col.index}>
+                  {col.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="setting-group">
+            <label className="setting-label" htmlFor="setting-y-column">
+              Y Column
+            </label>
+            <select
+              id="setting-y-column"
+              className="setting-select"
+              value={selectedSource.audioMapping.yColumn}
+              onChange={(e) =>
+                updateSourceMapping(selectedSource.id, {
+                  yColumn: parseInt(e.target.value),
+                })
+              }
+            >
+              {selectedSource.columns.map((col) => (
+                <option key={col.index} value={col.index}>
+                  {col.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="setting-group">
             <label className="setting-label" htmlFor="setting-color">
               Color
             </label>

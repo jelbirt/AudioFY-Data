@@ -338,4 +338,121 @@ describe('AppStore', () => {
       expect(state.progress).toBe(0.5); // unchanged
     });
   });
+
+  // -------------------------------------------------------------------------
+  // pendingImport
+  // -------------------------------------------------------------------------
+
+  describe('pendingImport', () => {
+    it('starts as null', () => {
+      expect(useAppStore.getState().pendingImport).toBeNull();
+    });
+
+    it('setPendingImport stores the pending import', () => {
+      const pending = {
+        parsedFile: {
+          sheets: [
+            { name: 'Sheet1', headers: ['a', 'b'], rows: [[1, 2]], numericCols: [0, 1] },
+            { name: 'Sheet2', headers: ['c', 'd'], rows: [[3, 4]], numericCols: [0, 1] },
+          ],
+        },
+        fileName: 'multi-sheet.xlsx',
+      };
+
+      useAppStore.getState().setPendingImport(pending as unknown as import('../../src/store').PendingImport);
+      expect(useAppStore.getState().pendingImport).toEqual(pending);
+    });
+
+    it('setPendingImport(null) clears the pending import', () => {
+      const pending = {
+        parsedFile: { sheets: [{ name: 'S1', headers: [], rows: [], numericCols: [] }] },
+        fileName: 'test.xlsx',
+      };
+
+      useAppStore.getState().setPendingImport(pending as unknown as import('../../src/store').PendingImport);
+      expect(useAppStore.getState().pendingImport).not.toBeNull();
+
+      useAppStore.getState().setPendingImport(null);
+      expect(useAppStore.getState().pendingImport).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Column mapping updates
+  // -------------------------------------------------------------------------
+
+  describe('column mapping updates', () => {
+    beforeEach(() => {
+      const source = mockSource({
+        columns: [
+          { index: 0, name: 'a', type: 'numeric', stats: { min: 0, max: 1, mean: 0.5, stdDev: 0.3, median: 0.5, q1: 0.25, q3: 0.75 } },
+          { index: 1, name: 'b', type: 'numeric', stats: { min: 0, max: 10, mean: 5, stdDev: 3, median: 5, q1: 2.5, q3: 7.5 } },
+          { index: 2, name: 'c', type: 'numeric', stats: { min: 0, max: 100, mean: 50, stdDev: 30, median: 50, q1: 25, q3: 75 } },
+        ],
+      });
+      useAppStore.getState().addSource(source);
+    });
+
+    it('updateSourceMapping changes xColumn', () => {
+      useAppStore.getState().updateSourceMapping('test-source-1', { xColumn: 2 });
+      const src = useAppStore.getState().sources[0];
+      expect(src.audioMapping.xColumn).toBe(2);
+      expect(src.audioMapping.yColumn).toBe(1); // unchanged
+    });
+
+    it('updateSourceMapping changes yColumn', () => {
+      useAppStore.getState().updateSourceMapping('test-source-1', { yColumn: 2 });
+      const src = useAppStore.getState().sources[0];
+      expect(src.audioMapping.yColumn).toBe(2);
+      expect(src.audioMapping.xColumn).toBe(0); // unchanged
+    });
+
+    it('updateSourceMapping changes both columns at once', () => {
+      useAppStore.getState().updateSourceMapping('test-source-1', { xColumn: 2, yColumn: 0 });
+      const src = useAppStore.getState().sources[0];
+      expect(src.audioMapping.xColumn).toBe(2);
+      expect(src.audioMapping.yColumn).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Config restoration (save/load flow)
+  // -------------------------------------------------------------------------
+
+  describe('config restoration', () => {
+    it('updatePlaybackConfig restores playback settings', () => {
+      useAppStore.getState().updatePlaybackConfig({ speed: 2, loop: true, duration: 20 });
+      const config = useAppStore.getState().playbackConfig;
+      expect(config.speed).toBe(2);
+      expect(config.loop).toBe(true);
+      expect(config.duration).toBe(20);
+    });
+
+    it('updateVisualizationConfig restores viz settings', () => {
+      useAppStore.getState().updateVisualizationConfig({
+        theme: 'dark',
+        showGrid: false,
+        pointSize: 10,
+      });
+      const config = useAppStore.getState().visualizationConfig;
+      expect(config.theme).toBe('dark');
+      expect(config.showGrid).toBe(false);
+      expect(config.pointSize).toBe(10);
+    });
+
+    it('updateAudioConfig restores audio settings', () => {
+      useAppStore.getState().updateAudioConfig({
+        masterVolume: 0.5,
+        effects: {
+          reverb: { enabled: true, decay: 3, wet: 0.6 },
+          filter: { enabled: true, frequency: 5000, type: 'lowpass' },
+          chorus: { enabled: true, frequency: 4, delayTime: 2.5, depth: 0.5 },
+        },
+      });
+      const config = useAppStore.getState().audioConfig;
+      expect(config.masterVolume).toBe(0.5);
+      expect(config.effects.reverb.enabled).toBe(true);
+      expect(config.effects.chorus.enabled).toBe(true);
+    });
+  });
 });

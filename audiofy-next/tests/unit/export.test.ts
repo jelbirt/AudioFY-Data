@@ -21,28 +21,32 @@
  * the export functions depend on browser APIs not fully available in jsdom.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { exportSVG, exportPNG } from '../../src/core/export';
+import { exportSVG, exportPNG, exportAudio } from '../../src/core/export';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
 // Mock Tone.js to avoid audio context issues in tests
-vi.mock('tone', () => ({
-  Recorder: vi.fn().mockImplementation(() => ({
-    start: vi.fn(),
-    stop: vi.fn().mockResolvedValue(new Blob()),
-    dispose: vi.fn(),
-  })),
-  getDestination: vi.fn(() => ({
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-  })),
-  getTransport: vi.fn(() => ({
-    start: vi.fn(),
-    stop: vi.fn(),
-  })),
-}));
+vi.mock('tone', () => {
+  class MockRecorder {
+    start = vi.fn().mockResolvedValue(undefined);
+    stop = vi.fn().mockResolvedValue(new Blob(['audio'], { type: 'audio/webm' }));
+    dispose = vi.fn();
+  }
+  return {
+    Recorder: MockRecorder,
+    getDestination: vi.fn(() => ({
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+    })),
+    getTransport: vi.fn(() => ({
+      start: vi.fn(),
+      stop: vi.fn(),
+      position: 0,
+    })),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -155,6 +159,76 @@ describe('Export: exportSVG', () => {
     // We can't easily check the clone, but we verify the function didn't throw
     expect(mockCreateObjectURL).toHaveBeenCalled();
   });
+});
+
+describe('Export: exportAudio', () => {
+  let mockCreateObjectURL: ReturnType<typeof vi.fn>;
+  let mockRevokeObjectURL: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-audio-url');
+    mockRevokeObjectURL = vi.fn();
+    URL.createObjectURL = mockCreateObjectURL;
+    URL.revokeObjectURL = mockRevokeObjectURL;
+
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      if (tag === 'a') {
+        return {
+          href: '',
+          download: '',
+          click: vi.fn(),
+        } as unknown as HTMLAnchorElement;
+      }
+      return document.implementation.createDocument(null, null).createElement(tag) as unknown as HTMLElement;
+    });
+
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as unknown as Node);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as unknown as Node);
+
+    // Mock MediaRecorder globally
+    vi.stubGlobal('MediaRecorder', class MockMediaRecorder {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('calls prepareFn and triggers download', async () => {
+    const prepareFn = vi.fn();
+
+    await exportAudio(prepareFn, 0.1, 'test-audio.webm', 0.05);
+
+    expect(prepareFn).toHaveBeenCalledOnce();
+    expect(mockCreateObjectURL).toHaveBeenCalledOnce();
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-audio-url');
+  }, 10000);
+
+  it('throws when MediaRecorder is unavailable', async () => {
+    vi.unstubAllGlobals(); // Remove MediaRecorder
+    // Ensure MediaRecorder is undefined
+    const globalObj = globalThis as Record<string, unknown>;
+    const original = globalObj.MediaRecorder;
+    delete globalObj.MediaRecorder;
+
+    try {
+      await expect(exportAudio(vi.fn(), 1)).rejects.toThrow('MediaRecorder unavailable');
+    } finally {
+      if (original !== undefined) {
+        globalObj.MediaRecorder = original;
+      }
+    }
+  });
+
+  it('uses custom release buffer', async () => {
+    const prepareFn = vi.fn();
+
+    // With a very short duration and custom release buffer
+    await exportAudio(prepareFn, 0.05, undefined, 0.05);
+
+    expect(prepareFn).toHaveBeenCalledOnce();
+    expect(mockCreateObjectURL).toHaveBeenCalled();
+  }, 10000);
 });
 
 describe('Export: exportPNG', () => {

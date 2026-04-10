@@ -24,6 +24,7 @@ interface ShortcutHandlers {
   stop: () => void;
   openFile: () => void;
   toggleSettings: () => void;
+  saveProject?: () => void;
 }
 
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
@@ -59,6 +60,12 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             h.toggleSettings();
+          }
+          break;
+        case 's':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            h.saveProject?.();
           }
           break;
       }

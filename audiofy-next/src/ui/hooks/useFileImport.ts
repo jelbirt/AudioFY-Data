@@ -21,6 +21,7 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import { createDataSource } from '@core/data';
+import { parseFile } from '@core/data';
 import { addRecentFile } from '@core/config';
 import { useAppStore } from '@store';
 
@@ -32,6 +33,7 @@ export function useFileImport() {
   const setRecentFiles = useAppStore((s) => s.setRecentFiles);
   const setError = useAppStore((s) => s.setError);
   const setLoading = useAppStore((s) => s.setLoading);
+  const setPendingImport = useAppStore((s) => s.setPendingImport);
 
   // Ref to hold browser fallback so openFileDialog can reference it
   // without a circular dependency.
@@ -39,6 +41,8 @@ export function useFileImport() {
 
   /**
    * Import a file from an ArrayBuffer (e.g., from drag-and-drop or input).
+   * If the file has multiple sheets, sets a pending import for user selection.
+   * Single-sheet files are imported immediately.
    */
   const importFromBuffer = useCallback(
     async (buffer: ArrayBuffer, fileName: string, filePath?: string) => {
@@ -46,7 +50,17 @@ export function useFileImport() {
       setError(null);
 
       try {
-        const { parsedFile, source } = createDataSource(buffer, fileName);
+        const parsedFile = parseFile(buffer, fileName);
+
+        if (parsedFile.sheets.length > 1) {
+          // Multi-sheet file — show import preview for user to pick
+          setPendingImport({ parsedFile, fileName, filePath });
+          setLoading(false);
+          return;
+        }
+
+        // Single sheet — import directly
+        const { source } = createDataSource(buffer, fileName);
         addSource(source, parsedFile);
 
         // Update recent files — read fresh state to avoid stale closure
@@ -62,7 +76,7 @@ export function useFileImport() {
         setLoading(false);
       }
     },
-    [addSource, setRecentFiles, setError, setLoading],
+    [addSource, setRecentFiles, setError, setLoading, setPendingImport],
   );
 
   /**
