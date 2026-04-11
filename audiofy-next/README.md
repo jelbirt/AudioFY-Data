@@ -9,16 +9,18 @@ Built with [Tauri v2](https://v2.tauri.app/), [React](https://react.dev/), [Tone
 ## Features
 
 - **Multi-format import** — xlsx, xls, csv, tsv, ods, json with automatic header detection
-- **Data sonification** — Maps data values to frequency, volume, and stereo panning with configurable waveforms (sine, square, sawtooth, triangle) and full ADSR envelopes
+- **Data sonification** — Maps data values to frequency, volume, and stereo panning with configurable waveforms (sine, square, sawtooth, triangle, FM/AM variants) and full ADSR envelopes
 - **Interactive scatter plot** — D3.js SVG with zoom/pan, color-coded multi-source rendering, animated point highlighting during playback, tooltips, and legend
-- **Synchronized data table** — Auto-scrolling, sortable columns, statistical footer, color-coded rows matching the scatter plot
+- **Synchronized data table** — Virtualized auto-scrolling, sortable columns, statistical footer, color-coded rows matching the scatter plot
 - **Audio-visual sync** — AudioContext.currentTime master clock with lookahead scheduling and Tone.Draw.schedule() for frame-accurate visual updates
 - **Multiple normalization modes** — Min-max, z-score, robust (IQR), and log transform
 - **Frequency mapping** — Logarithmic (perceptually uniform), linear, and MIDI scale-constrained
 - **Polyphonic playback** — Up to 16 simultaneous voices per data source with spatial audio panning
 - **Playback controls** — Play/pause/stop, speed (0.25x–4x), loop, seek/scrub
-- **Configuration persistence** — Save/load `.audiofy` config files with versioned JSON schema and Zod validation
-- **Export** — SVG, PNG (2x resolution), and audio (WebM) export
+- **Configuration persistence** — Save/load project config files with versioned JSON schema and Zod validation
+- **Export** — SVG, PNG (2x resolution), and audio (WebM/Opus) export
+- **Audio effects** — Reverb, filter (8 types), and chorus with full UI controls
+- **Sheet selection** — Multi-sheet file import with preview modal and column mapping
 - **Light/dark theme** — Automatic detection via `prefers-color-scheme` with manual toggle
 - **Keyboard accessible** — Full keyboard navigation, ARIA landmarks, screen reader support, `prefers-reduced-motion` respect
 - **Cross-platform** — Windows (.msi), macOS (.dmg), Linux (.AppImage, .deb) — ~10-15 MB bundle
@@ -65,15 +67,18 @@ npm run tauri dev
 |---------|-------------|
 | `npm run dev` | Start Vite dev server |
 | `npm run build` | TypeScript check + Vite production build |
+| `npm run preview` | Preview the production build locally |
 | `npm run tauri dev` | Launch Tauri desktop app in dev mode |
 | `npm run tauri build` | Build platform-specific installer |
-| `npm run test` | Run test suite |
+| `npm run test` | Run unit + integration tests (Vitest) |
 | `npm run test:watch` | Run tests in watch mode |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run lint` | Run ESLint |
+| `npm run test:coverage` | Run tests with V8 coverage report |
+| `npm run test:e2e` | Run end-to-end tests (Playwright) |
+| `npm run test:e2e:ui` | Run E2E tests with Playwright UI |
+| `npm run lint` | Run ESLint on `src/` |
+| `npm run typecheck` | TypeScript type checking |
 | `npm run format` | Format code with Prettier |
 | `npm run format:check` | Check formatting |
-| `npm run typecheck` | TypeScript type checking |
 
 ## Project Structure
 
@@ -102,6 +107,16 @@ audiofy-next/
 │   └── e2e/                # End-to-end tests
 └── .github/workflows/      # CI/CD pipeline
 ```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [User Guide](docs/user-guide.md) | Step-by-step walkthrough of the full workflow |
+| [Keyboard Shortcuts](docs/keyboard-shortcuts.md) | Quick reference for all shortcuts |
+| [Config Format](docs/config-format.md) | Project file JSON schema and field reference |
+| [Contributing](CONTRIBUTING.md) | Development setup, testing, and coding conventions |
+| [Changelog](CHANGELOG.md) | Feature history and release notes |
 
 ## Background
 
