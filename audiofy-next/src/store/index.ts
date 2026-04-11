@@ -81,7 +81,9 @@ export interface AppState {
   settingsPanelOpen: boolean;
   recentFiles: RecentFile[];
   error: string | null;
+  notification: string | null;
   loading: boolean;
+  loadingMessage: string | null;
 
   // --- Import ---
   pendingImport: PendingImport | null;
@@ -118,7 +120,8 @@ export interface AppActions {
   setSettingsPanelOpen: (open: boolean) => void;
   setRecentFiles: (files: RecentFile[]) => void;
   setError: (error: string | null) => void;
-  setLoading: (loading: boolean) => void;
+  setNotification: (notification: string | null) => void;
+  setLoading: (loading: boolean, message?: string | null) => void;
 
   // --- Import ---
   setPendingImport: (pending: PendingImport | null) => void;
@@ -154,7 +157,9 @@ export const useAppStore = create<AppStore>((set) => ({
   settingsPanelOpen: false,
   recentFiles: [],
   error: null,
+  notification: null,
   loading: false,
+  loadingMessage: null,
   pendingImport: null,
 
   // --- Actions ---
@@ -266,7 +271,8 @@ export const useAppStore = create<AppStore>((set) => ({
   setSettingsPanelOpen: (settingsPanelOpen) => set({ settingsPanelOpen }),
   setRecentFiles: (recentFiles) => set({ recentFiles }),
   setError: (error) => set({ error }),
-  setLoading: (loading) => set({ loading }),
+  setNotification: (notification) => set({ notification }),
+  setLoading: (loading, message) => set({ loading, loadingMessage: message ?? null }),
   setPendingImport: (pendingImport) => set({ pendingImport }),
 
   syncState: (patch) => set(patch),

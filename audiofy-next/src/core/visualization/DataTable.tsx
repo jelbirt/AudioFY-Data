@@ -454,6 +454,7 @@ export function DataTable({
       {/* Stats toggle */}
       <button
         onClick={() => setShowStats((prev) => !prev)}
+        aria-label={showStats ? 'Hide column statistics' : 'Show column statistics'}
         style={{
           position: 'sticky',
           bottom: 0,

@@ -78,8 +78,8 @@ export const Toolbar = memo(function Toolbar({
           className="btn"
           onClick={onExportSVG}
           disabled={!hasData}
-          title="Export chart as SVG"
-          aria-label="Export SVG"
+          title={hasData ? 'Export chart as SVG' : 'Load data to enable SVG export'}
+          aria-label={hasData ? 'Export SVG' : 'Export SVG (load data first)'}
         >
           SVG
         </button>
@@ -87,8 +87,8 @@ export const Toolbar = memo(function Toolbar({
           className="btn"
           onClick={onExportPNG}
           disabled={!hasData}
-          title="Export chart as PNG"
-          aria-label="Export PNG"
+          title={hasData ? 'Export chart as PNG' : 'Load data to enable PNG export'}
+          aria-label={hasData ? 'Export PNG' : 'Export PNG (load data first)'}
         >
           PNG
         </button>
@@ -96,8 +96,8 @@ export const Toolbar = memo(function Toolbar({
           className="btn"
           onClick={onExportAudio}
           disabled={!hasData}
-          title="Export audio (WebM/Opus)"
-          aria-label="Export audio"
+          title={hasData ? 'Export audio (WebM/Opus)' : 'Load data to enable audio export'}
+          aria-label={hasData ? 'Export audio' : 'Export audio (load data first)'}
         >
           Audio
         </button>

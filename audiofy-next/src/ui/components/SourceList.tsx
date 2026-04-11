@@ -82,8 +82,11 @@ export const SourceList = memo(function SourceList() {
         case 'Delete':
         case 'Backspace':
           if (selectedSourceId) {
-            e.preventDefault();
-            removeSource(selectedSourceId);
+            const name = sources.find((s) => s.id === selectedSourceId)?.name ?? 'this source';
+            if (window.confirm(`Remove "${name}"? You will need to re-import the file to restore it.`)) {
+              e.preventDefault();
+              removeSource(selectedSourceId);
+            }
           }
           break;
       }
@@ -155,7 +158,9 @@ export const SourceList = memo(function SourceList() {
               className="btn btn-icon btn-danger source-remove"
               onClick={(e) => {
                 e.stopPropagation();
-                removeSource(source.id);
+                if (window.confirm(`Remove "${source.name}"? You will need to re-import the file to restore it.`)) {
+                  removeSource(source.id);
+                }
               }}
               title="Remove source"
               aria-label={`Remove ${source.name}`}

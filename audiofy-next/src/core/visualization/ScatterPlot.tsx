@@ -550,6 +550,7 @@ export const ScatterPlot = memo(function ScatterPlot({
       <button
         onClick={resetZoom}
         title="Reset zoom"
+        aria-label="Reset chart zoom to original view"
         style={{
           position: 'absolute',
           bottom: 8,

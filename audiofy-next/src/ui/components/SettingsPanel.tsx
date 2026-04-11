@@ -201,7 +201,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
           </div>
 
           <div className="setting-group" role="group" aria-label="Frequency range">
-            <label className="setting-label">
+            <label className="setting-label" title="Controls the pitch range used to represent data values">
               Frequency Range: {selectedSource.audioMapping.frequencyRange[0]}–
               {selectedSource.audioMapping.frequencyRange[1]} Hz
             </label>
@@ -256,10 +256,17 @@ export const SettingsPanel = memo(function SettingsPanel() {
           </div>
 
           <div className="setting-group" role="group" aria-label="ADSR envelope">
-            <label className="setting-label">Envelope (ADSR)</label>
-            {(['attack', 'decay', 'sustain', 'release'] as const).map((param) => (
+            <label className="setting-label" title="Controls how each note's volume changes over time">Envelope (ADSR)</label>
+            {(['attack', 'decay', 'sustain', 'release'] as const).map((param) => {
+              const tooltips = {
+                attack: 'How quickly the sound reaches full volume after a note starts',
+                decay: 'How quickly the sound drops from peak to the sustain level',
+                sustain: 'The volume level held while the note is active',
+                release: 'How long the sound takes to fade out after the note ends',
+              };
+              return (
               <div className="setting-row" key={param}>
-                <label htmlFor={`setting-env-${param}`} style={{ width: 50, fontSize: 11 }}>
+                <label htmlFor={`setting-env-${param}`} style={{ width: 50, fontSize: 11 }} title={tooltips[param]}>
                   {param.charAt(0).toUpperCase() + param.slice(1)}
                 </label>
                 <input
@@ -291,7 +298,8 @@ export const SettingsPanel = memo(function SettingsPanel() {
                   {selectedSource.audioMapping.envelope[param].toFixed(2)}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -308,7 +316,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
       </div>
 
       <div className="setting-group">
-        <label className="setting-label" htmlFor="setting-duration">
+        <label className="setting-label" htmlFor="setting-duration" title="Total time to play through all data points">
           Duration: {playbackConfig.duration}s
         </label>
         <input
@@ -387,7 +395,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
       </div>
 
       <div className="setting-group">
-        <label className="setting-label" htmlFor="setting-master-volume">
+        <label className="setting-label" htmlFor="setting-master-volume" title="Overall output volume for all sources">
           Master Volume: {Math.round(audioConfig.masterVolume * 100)}%
         </label>
         <input
@@ -404,7 +412,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
 
       <div className="setting-group">
         <div className="setting-row">
-          <label htmlFor="setting-reverb">Reverb</label>
+          <label htmlFor="setting-reverb" title="Adds a spacious echo effect to the sound">Reverb</label>
           <input
             id="setting-reverb"
             type="checkbox"
@@ -423,7 +431,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
         {audioConfig.effects.reverb.enabled && (
           <>
             <div className="setting-row">
-              <label htmlFor="setting-reverb-wet" style={{ fontSize: 11 }}>
+              <label htmlFor="setting-reverb-wet" style={{ fontSize: 11 }} title="Balance between dry (original) and reverb signal">
                 Wet: {audioConfig.effects.reverb.wet.toFixed(1)}
               </label>
               <input
@@ -445,7 +453,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
               />
             </div>
             <div className="setting-row">
-              <label htmlFor="setting-reverb-decay" style={{ fontSize: 11 }}>
+              <label htmlFor="setting-reverb-decay" style={{ fontSize: 11 }} title="How long the reverb tail lasts">
                 Decay: {audioConfig.effects.reverb.decay.toFixed(1)}s
               </label>
               <input
@@ -475,7 +483,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
 
       <div className="setting-group">
         <div className="setting-row">
-          <label htmlFor="setting-filter">Filter</label>
+          <label htmlFor="setting-filter" title="Shapes the tone by cutting or boosting certain frequencies">Filter</label>
           <input
             id="setting-filter"
             type="checkbox"
@@ -552,7 +560,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
 
       <div className="setting-group">
         <div className="setting-row">
-          <label htmlFor="setting-chorus">Chorus</label>
+          <label htmlFor="setting-chorus" title="Adds thickness by layering slightly detuned copies of the sound">Chorus</label>
           <input
             id="setting-chorus"
             type="checkbox"

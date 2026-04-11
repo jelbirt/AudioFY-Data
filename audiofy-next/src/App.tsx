@@ -97,7 +97,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 export default function App() {
-  const { sources, activePoints, progress, visualizationConfig, settingsPanelOpen, error, loading, pendingImport } =
+  const { sources, activePoints, progress, visualizationConfig, settingsPanelOpen, error, loading, loadingMessage, notification, pendingImport } =
     useAppStore(
       useShallow((s) => ({
         sources: s.sources,
@@ -107,10 +107,14 @@ export default function App() {
         settingsPanelOpen: s.settingsPanelOpen,
         error: s.error,
         loading: s.loading,
+        loadingMessage: s.loadingMessage,
+        notification: s.notification,
         pendingImport: s.pendingImport,
       })),
     );
   const setError = useAppStore((s) => s.setError);
+  const setNotification = useAppStore((s) => s.setNotification);
+  const setLoading = useAppStore((s) => s.setLoading);
   const toggleSettingsPanel = useAppStore((s) => s.toggleSettingsPanel);
   const setPendingImport = useAppStore((s) => s.setPendingImport);
   const addSource = useAppStore((s) => s.addSource);
@@ -149,6 +153,13 @@ export default function App() {
       errorBannerRef.current?.focus();
     }
   }, [error]);
+
+  // --- Auto-dismiss notification after 3 seconds ---
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(timer);
+  }, [notification, setNotification]);
 
   // --- Theme ---
   useEffect(() => {
@@ -219,7 +230,8 @@ export default function App() {
     a.click();
     // Defer revocation to avoid racing with the browser's download initiation
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }, []);
+    setNotification('Project saved');
+  }, [setNotification]);
 
   const handleLoadProject = useCallback(() => {
     const input = document.createElement('input');
@@ -259,13 +271,14 @@ export default function App() {
         updatePlaybackConfig(config.playback);
         updateVisualizationConfig(config.visualization);
         updateAudioConfig(config.audio);
+        setNotification('Project loaded');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load project');
       }
     };
 
     input.click();
-  }, [setError, updatePlaybackConfig, updateVisualizationConfig, updateAudioConfig]);
+  }, [setError, setNotification, updatePlaybackConfig, updateVisualizationConfig, updateAudioConfig]);
 
   // --- Keyboard shortcuts ---
   const shortcutHandlers = useMemo(
@@ -359,10 +372,11 @@ export default function App() {
     }
     try {
       exportSVG(svg);
+      setNotification('SVG exported');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'SVG export failed');
     }
-  }, [getSvgElement, setError]);
+  }, [getSvgElement, setError, setNotification]);
 
   const handleExportPNG = useCallback(async () => {
     const svg = getSvgElement();
@@ -372,20 +386,25 @@ export default function App() {
     }
     try {
       await exportPNG(svg);
+      setNotification('PNG exported');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'PNG export failed');
     }
-  }, [getSvgElement, setError]);
+  }, [getSvgElement, setError, setNotification]);
 
   const handleExportAudio = useCallback(async () => {
+    setLoading(true, 'Exporting audio...');
     try {
       await initialize();
       const duration = playbackConfig.duration;
       await exportAudio(() => sync.prepare(), duration);
+      setNotification('Audio exported');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audio export failed');
+    } finally {
+      setLoading(false);
     }
-  }, [initialize, sync, playbackConfig.duration, setError]);
+  }, [initialize, sync, playbackConfig.duration, setError, setNotification, setLoading]);
 
   // --- ARIA live announcements for playback state ---
   const playbackState = useAppStore((s) => s.playbackState);
@@ -401,7 +420,7 @@ export default function App() {
         : playbackState === 'paused'
           ? 'Playback paused'
           : 'Playback stopped';
-    setAnnouncement(msg); // eslint-disable-line react-hooks/set-state-in-effect
+    setAnnouncement(msg);
   }, [playbackState]);
 
   return (
@@ -422,6 +441,16 @@ export default function App() {
           <div ref={errorBannerRef} className="error-banner" role="alert" tabIndex={-1}>
             <span>{error}</span>
             <button onClick={() => setError(null)} aria-label="Dismiss error">
+              &times;
+            </button>
+          </div>
+        )}
+
+        {/* Success notification banner */}
+        {notification && (
+          <div className="notification-banner" role="status" aria-live="polite">
+            <span>{notification}</span>
+            <button onClick={() => setNotification(null)} aria-label="Dismiss notification">
               &times;
             </button>
           </div>
@@ -475,6 +504,9 @@ export default function App() {
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     Supports .xlsx, .csv, .tsv, .ods, .json
                   </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Or press <kbd>Ctrl+O</kbd> to open the file dialog
+                  </div>
                 </div>
               ) : (
                 <ErrorBoundary
@@ -498,7 +530,7 @@ export default function App() {
 
               {loading && (
                 <div className="loading-overlay" role="status" aria-label="Loading">
-                  <span>Loading...</span>
+                  <span>{loadingMessage || 'Loading...'}</span>
                 </div>
               )}
             </div>
