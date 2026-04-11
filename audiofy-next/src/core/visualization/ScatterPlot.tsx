@@ -132,6 +132,16 @@ export function ScatterPlot({
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const currentTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
 
+  // Refs for values used in D3 event handlers to avoid stale closures
+  const onPointClickRef = useRef(onPointClick);
+  onPointClickRef.current = onPointClick;
+  const onPointHoverRef = useRef(onPointHover);
+  onPointHoverRef.current = onPointHover;
+  const xScaleRef = useRef<d3.ScaleLinear<number, number>>(null!);
+  const yScaleRef = useRef<d3.ScaleLinear<number, number>>(null!);
+  const configRef = useRef(config);
+  configRef.current = config;
+
   const innerWidth = width - MARGIN.left - MARGIN.right;
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
 
@@ -158,6 +168,10 @@ export function ScatterPlot({
     () => d3.scaleLinear().domain(yExtent).range([innerHeight, 0]).nice(),
     [yExtent, innerHeight],
   );
+
+  // Keep scale refs current for D3 event handlers
+  xScaleRef.current = xScale;
+  yScaleRef.current = yScale;
 
   // -----------------------------------------------------------------------
   // Initial SVG setup (structure, axes, grid, zoom)
@@ -374,17 +388,23 @@ export function ScatterPlot({
           }),
       )
       .on('click', (_event, d) => {
-        onPointClick?.(d.sourceId, d.pointIndex);
+        onPointClickRef.current?.(d.sourceId, d.pointIndex);
       })
       .on('mouseenter', (_event, d) => {
-        onPointHover?.(d.sourceId, d.pointIndex);
+        onPointHoverRef.current?.(d.sourceId, d.pointIndex);
+
+        // Use current transform and scales from refs (avoid stale closures)
+        const curTransform = currentTransformRef.current;
+        const curXScale = curTransform.rescaleX(xScaleRef.current);
+        const curYScale = curTransform.rescaleY(yScaleRef.current);
+        const curConfig = configRef.current;
 
         // Show tooltip
         const tooltipGroup = svg.select('.tooltip-group');
         tooltipGroup.selectAll('*').remove();
 
-        const tx = scaledX(d.x);
-        const ty = scaledY(d.y) - baseR * ACTIVE_RADIUS_MULTIPLIER - 8;
+        const tx = curXScale(d.x);
+        const ty = curYScale(d.y) - baseR * ACTIVE_RADIUS_MULTIPLIER - 8;
 
         const text = tooltipGroup
           .append('text')
@@ -392,7 +412,7 @@ export function ScatterPlot({
           .attr('y', ty)
           .attr('text-anchor', 'middle')
           .attr('font-size', '11px')
-          .attr('fill', config.theme === 'dark' ? '#fff' : '#000')
+          .attr('fill', curConfig.theme === 'dark' ? '#fff' : '#000')
           .text(`(${d.x.toFixed(2)}, ${d.y.toFixed(2)})`);
 
         // Background rect behind text
@@ -404,16 +424,15 @@ export function ScatterPlot({
           .attr('width', bbox.width + 8)
           .attr('height', bbox.height + 4)
           .attr('rx', 3)
-          .attr('fill', config.theme === 'dark' ? '#333' : '#fff')
-          .attr('stroke', config.theme === 'dark' ? '#666' : '#ccc')
+          .attr('fill', curConfig.theme === 'dark' ? '#333' : '#fff')
+          .attr('stroke', curConfig.theme === 'dark' ? '#666' : '#ccc')
           .attr('opacity', 0.9);
       })
       .on('mouseleave', (_event, d) => {
-        onPointHover?.(d.sourceId, null);
+        onPointHoverRef.current?.(d.sourceId, null);
         svg.select('.tooltip-group').selectAll('*').remove();
       });
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points, config.pointSize, config.theme, xScale, yScale]);
 
   // -----------------------------------------------------------------------

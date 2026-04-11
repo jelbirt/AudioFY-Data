@@ -114,6 +114,7 @@ describe('Export: exportSVG', () => {
   });
 
   it('creates a blob with SVG content and triggers download', () => {
+    vi.useFakeTimers();
     const svg = createMockSVG();
     exportSVG(svg);
 
@@ -122,8 +123,10 @@ describe('Export: exportSVG', () => {
     const blobArg = mockCreateObjectURL.mock.calls[0][0];
     expect(blobArg).toBeInstanceOf(Blob);
 
-    // Should revoke the URL after download
+    // Revocation is deferred via setTimeout
+    vi.advanceTimersByTime(1000);
     expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    vi.useRealTimers();
   });
 
   it('uses custom filename when provided', () => {
@@ -203,8 +206,11 @@ describe('Export: exportAudio', () => {
 
     expect(prepareFn).toHaveBeenCalledOnce();
     expect(mockCreateObjectURL).toHaveBeenCalledOnce();
+
+    // Revocation is deferred via setTimeout; wait for it
+    await new Promise((r) => setTimeout(r, 1100));
     expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-audio-url');
-  }, 10000);
+  }, 15000);
 
   it('throws when MediaRecorder is unavailable', async () => {
     vi.unstubAllGlobals(); // Remove MediaRecorder

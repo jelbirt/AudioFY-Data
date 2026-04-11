@@ -114,7 +114,8 @@ describe('AppStore', () => {
       useAppStore.getState().addSource(source, parsedFile);
 
       const state = useAppStore.getState();
-      expect(state.parsedFiles['test.csv']).toEqual(parsedFile);
+      // parsedFiles are keyed by source.id, not fileName
+      expect(state.parsedFiles[source.id]).toEqual(parsedFile);
     });
 
     it('removeSource removes a source by id', () => {

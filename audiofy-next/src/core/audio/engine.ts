@@ -58,6 +58,8 @@ export class AudioEngine {
   private filter: Tone.Filter | null = null;
   private scheduledEvents: number[] = [];
   private _state: AudioEngineState = 'uninitialized';
+  private _initPromise: Promise<void> | null = null;
+  private _scheduleGeneration = 0;
   private _onNoteStart: NoteCallback[] = [];
   private _onNoteEnd: NoteCallback[] = [];
   private _totalDuration = 0;
@@ -76,22 +78,30 @@ export class AudioEngine {
   async initialize(): Promise<void> {
     if (this._state !== 'uninitialized') return;
 
-    try {
-      await Tone.start();
-    } catch (err) {
-      throw new Error(
-        `Failed to start audio context: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    // Guard against concurrent init calls
+    if (this._initPromise) return this._initPromise;
 
-    this.masterGain = new Tone.Gain(0.8).toDestination();
-    this.reverb = new Tone.Reverb({ decay: 2, wet: 0 }).connect(this.masterGain);
-    this.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 })
-      .connect(this.reverb)
-      .start();
-    this.filter = new Tone.Filter({ frequency: 20000, type: 'lowpass' }).connect(this.chorus);
+    this._initPromise = (async () => {
+      try {
+        await Tone.start();
+      } catch (err) {
+        this._initPromise = null;
+        throw new Error(
+          `Failed to start audio context: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
 
-    this._state = 'ready';
+      this.masterGain = new Tone.Gain(0.8).toDestination();
+      this.reverb = new Tone.Reverb({ decay: 2, wet: 0 }).connect(this.masterGain);
+      this.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 })
+        .connect(this.reverb)
+        .start();
+      this.filter = new Tone.Filter({ frequency: 20000, type: 'lowpass' }).connect(this.chorus);
+
+      this._state = 'ready';
+    })();
+
+    return this._initPromise;
   }
 
   /**
@@ -209,6 +219,7 @@ export class AudioEngine {
 
     const transport = Tone.getTransport();
     const allNotes: ScheduledNote[] = [];
+    const generation = ++this._scheduleGeneration;
 
     for (const source of sources) {
       const channel = this.channels.get(source.id);
@@ -226,11 +237,14 @@ export class AudioEngine {
           channel.synth.triggerAttackRelease(note.frequency, note.duration, time, note.velocity);
 
           // Fire callbacks (via Tone.Draw for visual sync)
+          // Use generation check to skip stale callbacks after stop/re-prepare
           Tone.getDraw().schedule(() => {
+            if (this._scheduleGeneration !== generation) return;
             this._onNoteStart.forEach((cb) => cb(source.id, note.pointIndex, time));
           }, time);
 
           Tone.getDraw().schedule(() => {
+            if (this._scheduleGeneration !== generation) return;
             this._onNoteEnd.forEach((cb) => cb(source.id, note.pointIndex, time));
           }, time + note.duration);
         }, note.time);
@@ -270,6 +284,9 @@ export class AudioEngine {
     const transport = Tone.getTransport();
     transport.stop();
     transport.position = 0;
+
+    // Invalidate stale Tone.Draw callbacks
+    this._scheduleGeneration++;
 
     // Release all active notes
     for (const channel of this.channels.values()) {

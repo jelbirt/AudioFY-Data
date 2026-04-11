@@ -97,5 +97,9 @@ export function parseFileAsync(data: ArrayBuffer, fileName: string): Promise<Par
 export function terminateParseWorker(): void {
   worker?.terminate();
   worker = null;
+  // Reject all pending promises before clearing
+  for (const [, handlers] of pending) {
+    handlers.reject(new Error('Parse worker terminated'));
+  }
   pending.clear();
 }

@@ -109,6 +109,7 @@ export class SyncController {
   private animFrameId: number | null = null;
   private listeners: SyncStateCallback[] = [];
   private _state: SyncState;
+  private _preparedSources: DataSource[] = [];
   private unsubNoteStart: (() => void) | null = null;
   private unsubNoteEnd: (() => void) | null = null;
 
@@ -145,6 +146,9 @@ export class SyncController {
    */
   prepare(sources: DataSource[], duration?: number): void {
     const dur = duration ?? this._state.totalDuration;
+
+    // Store sources for re-preparation on speed/duration changes
+    this._preparedSources = sources;
 
     // Add sources to engine
     for (const src of sources) {
@@ -280,7 +284,13 @@ export class SyncController {
    * Set playback duration and re-prepare if sources exist.
    */
   setDuration(duration: number): void {
-    this.updateState({ totalDuration: Math.max(1, duration) });
+    const clamped = Math.max(1, duration);
+    if (this._preparedSources.length > 0) {
+      // Re-prepare with updated duration to reschedule notes
+      this.prepare(this._preparedSources, clamped);
+    } else {
+      this.updateState({ totalDuration: clamped });
+    }
   }
 
   /**
@@ -298,6 +308,7 @@ export class SyncController {
     }
     this.listeners = [];
     this.scheduledNotes = [];
+    this._preparedSources = [];
   }
 
   // -----------------------------------------------------------------------

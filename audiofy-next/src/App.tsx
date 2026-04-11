@@ -157,9 +157,13 @@ export default function App() {
       setError('No data loaded. Open a file first.');
       return;
     }
-    await initialize();
-    sync.prepare();
-    sync.play();
+    try {
+      await initialize();
+      sync.prepare();
+      sync.play();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start playback');
+    }
   }, [initialize, sync, sources.length, setError]);
 
   const handleStop = useCallback(() => {
@@ -207,7 +211,8 @@ export default function App() {
     a.href = url;
     a.download = 'audiofy-project.json';
     a.click();
-    URL.revokeObjectURL(url);
+    // Defer revocation to avoid racing with the browser's download initiation
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, []);
 
   const handleLoadProject = useCallback(() => {
@@ -274,7 +279,8 @@ export default function App() {
     (sourceId: string, pointIndex: number) => {
       const source = useAppStore.getState().sources.find((s) => s.id === sourceId);
       if (!source || source.rows.length === 0) return;
-      const p = pointIndex / source.rows.length;
+      const denominator = Math.max(1, source.rows.length - 1);
+      const p = pointIndex / denominator;
       sync.seekProgress(Math.max(0, Math.min(1, p)));
     },
     [sync],
@@ -284,7 +290,8 @@ export default function App() {
     (sourceId: string, pointIndex: number) => {
       const source = useAppStore.getState().sources.find((s) => s.id === sourceId);
       if (!source || source.rows.length === 0) return;
-      const p = pointIndex / source.rows.length;
+      const denominator = Math.max(1, source.rows.length - 1);
+      const p = pointIndex / denominator;
       sync.seekProgress(Math.max(0, Math.min(1, p)));
     },
     [sync],

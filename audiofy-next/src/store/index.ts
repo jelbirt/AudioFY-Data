@@ -163,7 +163,8 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => {
       const newParsedFiles = { ...state.parsedFiles };
       if (parsedFile) {
-        newParsedFiles[source.fileName] = parsedFile;
+        // Key by source ID to avoid collisions when files share the same name
+        newParsedFiles[source.id] = parsedFile;
       }
       return {
         sources: [...state.sources, source],
@@ -175,16 +176,10 @@ export const useAppStore = create<AppStore>((set) => ({
   removeSource: (sourceId) =>
     set((state) => {
       const remaining = state.sources.filter((s) => s.id !== sourceId);
-      const removedSource = state.sources.find((s) => s.id === sourceId);
 
-      // Clean up parsedFiles if no other source references the same fileName
+      // Clean up parsedFiles entry for the removed source
       const newParsedFiles = { ...state.parsedFiles };
-      if (removedSource) {
-        const stillReferenced = remaining.some((s) => s.fileName === removedSource.fileName);
-        if (!stillReferenced) {
-          delete newParsedFiles[removedSource.fileName];
-        }
-      }
+      delete newParsedFiles[sourceId];
 
       // Auto-select another source if the deleted one was selected
       let nextSelected = state.selectedSourceId;
@@ -233,7 +228,16 @@ export const useAppStore = create<AppStore>((set) => ({
       ),
     })),
 
-  clearSources: () => set({ sources: [], parsedFiles: {}, selectedSourceId: null }),
+  clearSources: () =>
+    set({
+      sources: [],
+      parsedFiles: {},
+      selectedSourceId: null,
+      playbackState: 'stopped',
+      currentTime: 0,
+      progress: 0,
+      activePoints: [],
+    }),
 
   setPlaybackState: (playbackState) => set({ playbackState }),
   setCurrentTime: (currentTime) => set({ currentTime }),

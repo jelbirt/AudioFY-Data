@@ -33,7 +33,14 @@ export function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPrevi
   const [selectedSheet, setSelectedSheet] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const sheet: ParsedSheet = parsedFile.sheets[selectedSheet];
+  // Clamp selectedSheet to valid range (defensive)
+  const hasSheets = parsedFile.sheets.length > 0;
+  const safeSheetIndex = hasSheets
+    ? Math.min(selectedSheet, parsedFile.sheets.length - 1)
+    : 0;
+  const sheet: ParsedSheet | undefined = hasSheets
+    ? parsedFile.sheets[safeSheetIndex]
+    : undefined;
 
   // Focus trap: focus the dialog on mount
   useEffect(() => {
@@ -51,8 +58,28 @@ export function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPrevi
   );
 
   const handleConfirm = useCallback(() => {
-    onConfirm(selectedSheet);
-  }, [onConfirm, selectedSheet]);
+    onConfirm(safeSheetIndex);
+  }, [onConfirm, safeSheetIndex]);
+
+  // Guard: if there are no sheets, show an error state
+  if (!sheet) {
+    return (
+      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Import error">
+        <div className="modal-content" ref={dialogRef} tabIndex={-1}>
+          <div className="modal-header">
+            <h2 className="modal-title">Import: {pending.fileName}</h2>
+            <button className="btn modal-close" onClick={onCancel} aria-label="Close">&times;</button>
+          </div>
+          <div className="modal-body">
+            <p>This file contains no readable sheets.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn" onClick={onCancel}>Close</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Preview: show first 5 rows of the selected sheet
   const previewRows = sheet.data.slice(0, 5);

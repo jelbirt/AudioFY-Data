@@ -73,7 +73,7 @@ export function createDataSource(
   if (parsedFile.sheets.length === 0) {
     throw new Error(`No sheets found in file: ${fileName}`);
   }
-  if (sheetIndex >= parsedFile.sheets.length) {
+  if (sheetIndex < 0 || sheetIndex >= parsedFile.sheets.length) {
     throw new Error(
       `Sheet index ${sheetIndex} out of range (file has ${parsedFile.sheets.length} sheets)`,
     );
@@ -128,10 +128,10 @@ export function buildDataSource(
         return typeof val === 'number' ? val : 0;
       }),
     )
-    .filter((row) => row.some((v) => v !== 0)); // remove all-zero rows
+    .filter((row) => row.some((v) => !Number.isNaN(v))); // remove rows that are entirely NaN
 
   const id = generateSourceId();
-  const colorIndex = (sourceIdCounter % DEFAULT_COLORS.length);
+  const colorIndex = ((sourceIdCounter - 1) % DEFAULT_COLORS.length);
 
   const normalization = options.normalization ?? 'min-max';
 

@@ -107,7 +107,11 @@ export function useFileImport() {
 
       setLoading(true);
       const contents = await readFile(filePath);
-      const buffer = contents.buffer as ArrayBuffer;
+      // Slice to the exact byte range of the view to avoid extra bytes
+      const buffer = contents.buffer.slice(
+        contents.byteOffset,
+        contents.byteOffset + contents.byteLength,
+      );
       const fileName = filePath.split(/[\\/]/).pop() ?? filePath;
 
       await importFromBuffer(buffer, fileName, filePath);
@@ -166,8 +170,13 @@ export function useFileImport() {
         return;
       }
 
-      const buffer = await file.arrayBuffer();
-      await importFromBuffer(buffer, file.name);
+      try {
+        const buffer = await file.arrayBuffer();
+        await importFromBuffer(buffer, file.name);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to read dropped file';
+        setError(message);
+      }
     },
     [importFromBuffer, setError],
   );

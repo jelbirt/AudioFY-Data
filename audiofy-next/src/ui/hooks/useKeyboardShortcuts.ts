@@ -37,13 +37,26 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't capture if user is typing in an input
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // Don't capture if user is typing in an editable element
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // Don't capture inside open dialogs/modals unless the shortcut is Escape
+      if (e.key !== 'Escape' && target.closest('[role="dialog"], dialog')) return;
 
       const h = handlersRef.current;
       switch (e.key) {
         case ' ':
+          // Ignore key-repeat to avoid spamming play/pause
+          if (e.repeat) return;
           e.preventDefault();
           h.togglePlayPause();
           break;
