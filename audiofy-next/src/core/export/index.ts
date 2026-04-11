@@ -196,7 +196,11 @@ export async function exportAudio(
   // Create a recorder connected to the Tone.js destination
   let recorder: Tone.Recorder;
   try {
-    recorder = new Tone.Recorder();
+    // Request WebM/Opus if the browser supports it; fall back to default
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : undefined;
+    recorder = new Tone.Recorder({ mimeType });
     Tone.getDestination().connect(recorder);
   } catch (err) {
     throw new Error(

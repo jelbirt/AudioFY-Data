@@ -30,7 +30,7 @@ import { ScatterPlot } from '@core/visualization/ScatterPlot';
 import { DataTable } from '@core/visualization/DataTable';
 import { exportSVG, exportPNG, exportAudio } from '@core/export';
 import { buildDataSource } from '@core/data';
-import { serializeConfig, validateConfig } from '@core/config';
+import { serializeConfig, validateConfig, migrateConfig } from '@core/config';
 import type { AudioFYConfig, SourceConfig } from '@types';
 import '@ui/styles/app.css';
 
@@ -221,7 +221,21 @@ export default function App() {
 
       try {
         const text = await file.text();
-        const result = validateConfig(text);
+        let data: unknown;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          setError('Invalid project file: not valid JSON');
+          return;
+        }
+
+        // Try direct validation first, then migration for older versions
+        let result = validateConfig(data);
+        if (!result.success || !result.config) {
+          // Attempt migration from older config versions
+          const migrated = migrateConfig(data);
+          result = validateConfig(migrated);
+        }
 
         if (!result.success || !result.config) {
           setError(`Invalid project file: ${result.errors.join(', ')}`);

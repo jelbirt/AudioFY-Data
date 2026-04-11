@@ -45,6 +45,14 @@ export interface PendingImport {
 import type { RecentFile } from '@core/config';
 import { DEFAULT_PLAYBACK, DEFAULT_VISUALIZATION, DEFAULT_AUDIO } from '@core/config';
 
+/** Detect system color-scheme preference. */
+function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+}
+
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
@@ -141,7 +149,7 @@ export const useAppStore = create<AppStore>((set) => ({
   playbackConfig: { ...DEFAULT_PLAYBACK },
   audioConfig: { ...DEFAULT_AUDIO },
   audioInitialized: false,
-  visualizationConfig: { ...DEFAULT_VISUALIZATION },
+  visualizationConfig: { ...DEFAULT_VISUALIZATION, theme: getSystemTheme() },
   selectedSourceId: null,
   settingsPanelOpen: false,
   recentFiles: [],

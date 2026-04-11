@@ -64,6 +64,14 @@ const ACTIVE_RADIUS_MULTIPLIER = 2.2;
 const ACTIVE_STROKE_WIDTH = 2.5;
 const TRANSITION_DURATION = 80; // ms — fast for audio sync
 
+/** Respect prefers-reduced-motion: skip D3 transitions when the OS requests it. */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Helpers (pure, testable)
 // ---------------------------------------------------------------------------
@@ -351,9 +359,19 @@ export function ScatterPlot({
             .attr('fill', (d) => d.sourceColor)
             .attr('opacity', 0.7)
             .attr('cursor', 'pointer')
-            .call((sel) => sel.transition().duration(300).attr('r', baseR)),
+            .call((sel) => {
+              const s = prefersReducedMotion() ? sel : sel.transition().duration(300);
+              s.attr('r', baseR);
+            }),
         (update) => update,
-        (exit) => exit.call((sel) => sel.transition().duration(200).attr('r', 0).remove()),
+        (exit) =>
+          exit.call((sel) => {
+            if (prefersReducedMotion()) {
+              sel.remove();
+            } else {
+              sel.transition().duration(200).attr('r', 0).remove();
+            }
+          }),
       )
       .on('click', (_event, d) => {
         onPointClick?.(d.sourceId, d.pointIndex);
@@ -405,10 +423,10 @@ export function ScatterPlot({
     const svg = d3.select(svgRef.current);
     const baseR = config.pointSize;
 
-    svg
-      .selectAll<SVGCircleElement, PlotPoint>('.data-point')
-      .transition()
-      .duration(TRANSITION_DURATION)
+    const reduced = prefersReducedMotion();
+    const sel = svg.selectAll<SVGCircleElement, PlotPoint>('.data-point');
+    const applied = reduced ? sel : sel.transition().duration(TRANSITION_DURATION);
+    applied
       .attr('r', (d) => (isPointActive(d, activePoints) ? baseR * ACTIVE_RADIUS_MULTIPLIER : baseR))
       .attr('opacity', (d) => (isPointActive(d, activePoints) ? 1 : 0.6))
       .attr('stroke', (d) =>
@@ -430,10 +448,14 @@ export function ScatterPlot({
   // -----------------------------------------------------------------------
   const resetZoom = useCallback(() => {
     if (!svgRef.current || !zoomRef.current) return;
-    d3.select(svgRef.current)
-      .transition()
-      .duration(500)
-      .call(zoomRef.current.transform, d3.zoomIdentity);
+    if (prefersReducedMotion()) {
+      d3.select(svgRef.current).call(zoomRef.current.transform, d3.zoomIdentity);
+    } else {
+      d3.select(svgRef.current)
+        .transition()
+        .duration(500)
+        .call(zoomRef.current.transform, d3.zoomIdentity);
+    }
   }, []);
 
   // Expose resetZoom on the SVG element for external access

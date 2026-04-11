@@ -95,6 +95,7 @@ audiofy-next/
 │   ├── ui/
 │   │   ├── components/     # React UI components
 │   │   ├── hooks/          # Custom React hooks
+│   │   ├── layouts/        # Layout components
 │   │   └── styles/         # CSS with light/dark themes
 │   ├── store/              # Zustand state management
 │   ├── types/              # TypeScript type definitions
@@ -105,7 +106,8 @@ audiofy-next/
 │   ├── unit/               # Unit tests (Vitest)
 │   ├── integration/        # Integration tests
 │   └── e2e/                # End-to-end tests
-└── .github/workflows/      # CI/CD pipeline
+├── docs/                    # User documentation
+└── .github/workflows/       # CI/CD pipeline
 ```
 
 ## Documentation

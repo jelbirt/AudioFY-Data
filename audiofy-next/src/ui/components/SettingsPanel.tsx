@@ -21,6 +21,17 @@
 import { useAppStore } from '@store';
 import type { OscillatorType, NormalizationMode, FrequencyScale } from '@types';
 
+const FILTER_TYPES: BiquadFilterType[] = [
+  'lowpass',
+  'highpass',
+  'bandpass',
+  'lowshelf',
+  'highshelf',
+  'peaking',
+  'notch',
+  'allpass',
+];
+
 const WAVEFORMS: OscillatorType[] = [
   'sine',
   'square',
@@ -404,34 +415,61 @@ export function SettingsPanel() {
           />
         </div>
         {audioConfig.effects.reverb.enabled && (
-          <div className="setting-row">
-            <label htmlFor="setting-reverb-wet" style={{ fontSize: 11 }}>
-              Wet: {audioConfig.effects.reverb.wet.toFixed(1)}
-            </label>
-            <input
-              id="setting-reverb-wet"
-              type="range"
-              className="setting-range"
-              min={0}
-              max={100}
-              value={Math.round(audioConfig.effects.reverb.wet * 100)}
-              aria-label={`Reverb wet: ${audioConfig.effects.reverb.wet.toFixed(1)}`}
-              onChange={(e) =>
-                updateAudioConfig({
-                  effects: {
-                    ...audioConfig.effects,
-                    reverb: { ...audioConfig.effects.reverb, wet: parseInt(e.target.value) / 100 },
-                  },
-                })
-              }
-            />
-          </div>
+          <>
+            <div className="setting-row">
+              <label htmlFor="setting-reverb-wet" style={{ fontSize: 11 }}>
+                Wet: {audioConfig.effects.reverb.wet.toFixed(1)}
+              </label>
+              <input
+                id="setting-reverb-wet"
+                type="range"
+                className="setting-range"
+                min={0}
+                max={100}
+                value={Math.round(audioConfig.effects.reverb.wet * 100)}
+                aria-label={`Reverb wet: ${audioConfig.effects.reverb.wet.toFixed(1)}`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      reverb: { ...audioConfig.effects.reverb, wet: parseInt(e.target.value) / 100 },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="setting-row">
+              <label htmlFor="setting-reverb-decay" style={{ fontSize: 11 }}>
+                Decay: {audioConfig.effects.reverb.decay.toFixed(1)}s
+              </label>
+              <input
+                id="setting-reverb-decay"
+                type="range"
+                className="setting-range"
+                min={1}
+                max={300}
+                value={Math.round(audioConfig.effects.reverb.decay * 10)}
+                aria-label={`Reverb decay: ${audioConfig.effects.reverb.decay.toFixed(1)} seconds`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      reverb: {
+                        ...audioConfig.effects.reverb,
+                        decay: parseInt(e.target.value) / 10,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+          </>
         )}
       </div>
 
       <div className="setting-group">
         <div className="setting-row">
-          <label htmlFor="setting-filter">Low-pass Filter</label>
+          <label htmlFor="setting-filter">Filter</label>
           <input
             id="setting-filter"
             type="checkbox"
@@ -448,31 +486,61 @@ export function SettingsPanel() {
           />
         </div>
         {audioConfig.effects.filter.enabled && (
-          <div className="setting-row">
-            <label htmlFor="setting-filter-freq" style={{ fontSize: 11 }}>
-              Cutoff: {audioConfig.effects.filter.frequency} Hz
-            </label>
-            <input
-              id="setting-filter-freq"
-              type="range"
-              className="setting-range"
-              min={20}
-              max={20000}
-              value={audioConfig.effects.filter.frequency}
-              aria-label={`Filter cutoff: ${audioConfig.effects.filter.frequency} Hz`}
-              onChange={(e) =>
-                updateAudioConfig({
-                  effects: {
-                    ...audioConfig.effects,
-                    filter: {
-                      ...audioConfig.effects.filter,
-                      frequency: parseInt(e.target.value),
+          <>
+            <div className="setting-row">
+              <label htmlFor="setting-filter-type" style={{ fontSize: 11 }}>
+                Type
+              </label>
+              <select
+                id="setting-filter-type"
+                className="setting-select"
+                value={audioConfig.effects.filter.type}
+                style={{ width: 'auto' }}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      filter: {
+                        ...audioConfig.effects.filter,
+                        type: e.target.value as BiquadFilterType,
+                      },
                     },
-                  },
-                })
-              }
-            />
-          </div>
+                  })
+                }
+              >
+                {FILTER_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="setting-row">
+              <label htmlFor="setting-filter-freq" style={{ fontSize: 11 }}>
+                Cutoff: {audioConfig.effects.filter.frequency} Hz
+              </label>
+              <input
+                id="setting-filter-freq"
+                type="range"
+                className="setting-range"
+                min={20}
+                max={20000}
+                value={audioConfig.effects.filter.frequency}
+                aria-label={`Filter cutoff: ${audioConfig.effects.filter.frequency} Hz`}
+                onChange={(e) =>
+                  updateAudioConfig({
+                    effects: {
+                      ...audioConfig.effects,
+                      filter: {
+                        ...audioConfig.effects.filter,
+                        frequency: parseInt(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+          </>
         )}
       </div>
 

@@ -48,7 +48,11 @@ function getWorker(): Worker | null {
     };
 
     worker.onerror = () => {
-      // Worker failed to load — dispose and fall back to sync
+      // Worker failed — reject all pending requests and fall back to sync
+      for (const [id, handlers] of pending) {
+        handlers.reject(new Error('Parse worker encountered an error'));
+        pending.delete(id);
+      }
       worker?.terminate();
       worker = null;
     };

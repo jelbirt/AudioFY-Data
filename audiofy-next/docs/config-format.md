@@ -79,6 +79,8 @@ Each source represents one imported data file/sheet and its sonification configu
 | `sustain` | number | 0–1 | 0.3 |
 | `release` | number | 0–30 seconds | 0.5 |
 
+> **Note:** The schema allows the full ranges above for interoperability. The UI sliders expose a practical subset: attack/decay up to 1s, release up to 3s, duration up to 120s, point size 2–20, min frequency 20–8,000 Hz, max frequency 200–20,000 Hz.
+
 ## Playback
 
 ```json

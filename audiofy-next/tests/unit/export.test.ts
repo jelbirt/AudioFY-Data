@@ -186,7 +186,9 @@ describe('Export: exportAudio', () => {
     vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as unknown as Node);
 
     // Mock MediaRecorder globally
-    vi.stubGlobal('MediaRecorder', class MockMediaRecorder {});
+    vi.stubGlobal('MediaRecorder', class MockMediaRecorder {
+      static isTypeSupported(_type: string) { return false; }
+    });
   });
 
   afterEach(() => {

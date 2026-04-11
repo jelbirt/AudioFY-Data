@@ -69,8 +69,8 @@ Change these at any time using the dropdowns. Only numeric columns are available
 | Setting | Description | Range |
 |---------|-------------|-------|
 | **Frequency Scale** | How data values map to pitch | Logarithmic (default), Linear, MIDI |
-| **Min Frequency** | Lowest pitch in Hz | 20 – 20,000 |
-| **Max Frequency** | Highest pitch in Hz | 20 – 20,000 |
+| **Min Frequency** | Lowest pitch in Hz | 20 – 8,000 |
+| **Max Frequency** | Highest pitch in Hz | 200 – 20,000 |
 
 - **Logarithmic** — perceptually uniform spacing; recommended for most data
 - **Linear** — direct proportional mapping; better for small ranges
@@ -137,7 +137,7 @@ Global effects applied to all sources:
 | **Stop** | Stop and reset to beginning (`Escape`) |
 | **Speed** | 0.25x to 4x playback speed |
 | **Loop** | Toggle continuous looping |
-| **Duration** | Total playback time (1–600 seconds) |
+| **Duration** | Total playback time (1–120 seconds) |
 | **Seek** | Click the progress bar to jump to a position |
 
 ### What Happens During Playback
@@ -198,7 +198,9 @@ Click the **Export Audio** button in the toolbar. This records the full playback
 
 ### Load
 
-Click the **Load** button and select a previously saved `.json` project file. AudioFY validates the config against its schema and restores all settings. If validation fails, you'll see an error message with details.
+Click the **Load** button and select a previously saved `.json` project file. AudioFY validates the config against its schema and restores playback, visualization, and audio settings. Older config versions (v1 or missing version) are automatically migrated. If validation fails, you'll see an error message with details.
+
+**Current limitation:** Loading a project restores settings (playback speed, effects, theme, etc.) but does not automatically re-import data sources. You'll need to re-open your data files manually after loading a project.
 
 ## Troubleshooting
 
