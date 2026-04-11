@@ -75,7 +75,7 @@ export class AudioEngine {
   /**
    * Initialize the audio context. Must be called after a user gesture.
    */
-  async initialize(): Promise<void> {
+  async initialize(timeoutMs = 10000): Promise<void> {
     if (this._state !== 'uninitialized') return;
 
     // Guard against concurrent init calls
@@ -83,7 +83,12 @@ export class AudioEngine {
 
     this._initPromise = (async () => {
       try {
-        await Tone.start();
+        await Promise.race([
+          Tone.start(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Audio context initialization timed out')), timeoutMs),
+          ),
+        ]);
       } catch (err) {
         this._initPromise = null;
         throw new Error(

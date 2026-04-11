@@ -18,7 +18,9 @@
  * SettingsPanel — source audio mapping, visualization, and audio config.
  * All form controls have proper label associations for screen readers.
  */
+import { memo } from 'react';
 import { useAppStore } from '@store';
+import { useShallow } from 'zustand/react/shallow';
 import type { OscillatorType, NormalizationMode, FrequencyScale } from '@types';
 
 const FILTER_TYPES: BiquadFilterType[] = [
@@ -50,17 +52,21 @@ const WAVEFORMS: OscillatorType[] = [
 const NORMALIZATIONS: NormalizationMode[] = ['none', 'min-max', 'z-score', 'robust', 'log'];
 const FREQ_SCALES: FrequencyScale[] = ['log', 'linear', 'midi'];
 
-export function SettingsPanel() {
-  const sources = useAppStore((s) => s.sources);
-  const selectedSourceId = useAppStore((s) => s.selectedSourceId);
+export const SettingsPanel = memo(function SettingsPanel() {
+  const { sources, selectedSourceId, visualizationConfig, audioConfig, playbackConfig } = useAppStore(
+    useShallow((s) => ({
+      sources: s.sources,
+      selectedSourceId: s.selectedSourceId,
+      visualizationConfig: s.visualizationConfig,
+      audioConfig: s.audioConfig,
+      playbackConfig: s.playbackConfig,
+    })),
+  );
   const updateSourceMapping = useAppStore((s) => s.updateSourceMapping);
   const updateSourceNormalization = useAppStore((s) => s.updateSourceNormalization);
   const updateSourceColor = useAppStore((s) => s.updateSourceColor);
-  const visualizationConfig = useAppStore((s) => s.visualizationConfig);
   const updateVisualizationConfig = useAppStore((s) => s.updateVisualizationConfig);
-  const audioConfig = useAppStore((s) => s.audioConfig);
   const updateAudioConfig = useAppStore((s) => s.updateAudioConfig);
-  const playbackConfig = useAppStore((s) => s.playbackConfig);
   const updatePlaybackConfig = useAppStore((s) => s.updatePlaybackConfig);
 
   const selectedSource = sources.find((s) => s.id === selectedSourceId);
@@ -644,4 +650,4 @@ export function SettingsPanel() {
       </div>
     </div>
   );
-}
+});

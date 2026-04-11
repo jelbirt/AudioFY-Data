@@ -147,6 +147,14 @@ export class SyncController {
   prepare(sources: DataSource[], duration?: number): void {
     const dur = duration ?? this._state.totalDuration;
 
+    // Skip re-preparation if sources are identical (same IDs in same order)
+    const sameAsBefore =
+      sources.length === this._preparedSources.length &&
+      sources.every((s, i) => s.id === this._preparedSources[i].id);
+    if (sameAsBefore && dur === this._state.totalDuration && this.scheduledNotes.length > 0) {
+      return;
+    }
+
     // Store sources for re-preparation on speed/duration changes
     this._preparedSources = sources;
 
@@ -298,14 +306,18 @@ export class SyncController {
    */
   dispose(): void {
     this.stopProgressLoop();
-    if (this.unsubNoteStart) {
-      this.unsubNoteStart();
-      this.unsubNoteStart = null;
+    try {
+      this.unsubNoteStart?.();
+    } catch {
+      // Engine may already be disposed
     }
-    if (this.unsubNoteEnd) {
-      this.unsubNoteEnd();
-      this.unsubNoteEnd = null;
+    this.unsubNoteStart = null;
+    try {
+      this.unsubNoteEnd?.();
+    } catch {
+      // Engine may already be disposed
     }
+    this.unsubNoteEnd = null;
     this.listeners = [];
     this.scheduledNotes = [];
     this._preparedSources = [];

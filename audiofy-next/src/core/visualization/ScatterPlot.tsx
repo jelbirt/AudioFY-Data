@@ -20,7 +20,7 @@
  *
  * React owns the component lifecycle; D3 owns rendering inside the SVG via refs.
  */
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import type { DataSource, ActivePoint, VisualizationConfig } from '@types';
 
@@ -118,7 +118,7 @@ export function isPointActive(point: PlotPoint, activePoints: ActivePoint[]): bo
 // Component
 // ---------------------------------------------------------------------------
 
-export function ScatterPlot({
+export const ScatterPlot = memo(function ScatterPlot({
   sources,
   activePoints,
   playbackProgress: _playbackProgress,
@@ -315,6 +315,11 @@ export function ScatterPlot({
     svg.call(zoom);
     zoomRef.current = zoom;
 
+    // Cleanup: remove all D3 content and zoom behavior on unmount/re-init
+    return () => {
+      svg.on('.zoom', null);
+      svg.selectAll('*').remove();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.theme, config.showGrid, innerWidth, innerHeight]);
 
@@ -562,4 +567,4 @@ export function ScatterPlot({
       </button>
     </div>
   );
-}
+});

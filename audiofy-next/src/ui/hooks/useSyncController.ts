@@ -34,7 +34,7 @@ export function useSyncController(getEngine: () => AudioEngine | null) {
   const playbackConfigRef = useRef(playbackConfig);
   useEffect(() => {
     playbackConfigRef.current = playbackConfig;
-  });
+  }, [playbackConfig]);
 
   /**
    * Ensure a SyncController exists and is wired to the current engine.

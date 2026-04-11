@@ -18,7 +18,7 @@
  * ImportPreviewModal — shown when a multi-sheet file is opened.
  * Lets the user pick which sheet to import and preview its contents.
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import type { PendingImport } from '@store';
 import type { ParsedSheet } from '@types';
 
@@ -28,10 +28,11 @@ interface ImportPreviewModalProps {
   onCancel: () => void;
 }
 
-export function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPreviewModalProps) {
+export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPreviewModalProps) {
   const { parsedFile } = pending;
   const [selectedSheet, setSelectedSheet] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
 
   // Clamp selectedSheet to valid range (defensive)
   const hasSheets = parsedFile.sheets.length > 0;
@@ -42,9 +43,13 @@ export function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPrevi
     ? parsedFile.sheets[safeSheetIndex]
     : undefined;
 
-  // Focus trap: focus the dialog on mount
+  // Focus trap: focus the dialog on mount, restore focus on unmount
   useEffect(() => {
+    prevFocusRef.current = document.activeElement as HTMLElement;
     dialogRef.current?.focus();
+    return () => {
+      prevFocusRef.current?.focus();
+    };
   }, []);
 
   // Close on Escape
@@ -183,4 +188,4 @@ export function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPrevi
       </div>
     </div>
   );
-}
+});

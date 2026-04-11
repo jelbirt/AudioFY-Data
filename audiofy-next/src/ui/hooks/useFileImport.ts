@@ -21,7 +21,7 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import { buildDataSource } from '@core/data';
-import { parseFileAsync } from '@core/data';
+import { parseFileAsync, terminateParseWorker } from '@core/data';
 import { addRecentFile } from '@core/config';
 import { useAppStore } from '@store';
 
@@ -151,7 +151,12 @@ export function useFileImport() {
   // Keep the ref in sync with the latest callback
   useEffect(() => {
     browserDialogRef.current = openBrowserFileDialog;
-  });
+  }, [openBrowserFileDialog]);
+
+  // Terminate the parse worker on unmount to avoid leaks
+  useEffect(() => {
+    return () => terminateParseWorker();
+  }, []);
 
   /**
    * Handle drag-and-drop file events.

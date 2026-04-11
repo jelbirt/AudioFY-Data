@@ -17,6 +17,7 @@
 /**
  * Toolbar — top bar with file import, playback controls, export, and settings toggle.
  */
+import { memo } from 'react';
 import { PlaybackControls } from './PlaybackControls';
 import { useAppStore } from '@store';
 
@@ -32,7 +33,7 @@ interface ToolbarProps {
   onLoadProject: () => void;
 }
 
-export function Toolbar({
+export const Toolbar = memo(function Toolbar({
   onOpenFile,
   onStop,
   onTogglePlayPause,
@@ -117,4 +118,4 @@ export function Toolbar({
       </div>
     </div>
   );
-}
+});

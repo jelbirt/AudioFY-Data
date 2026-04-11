@@ -33,7 +33,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
   const handlersRef = useRef(handlers);
   useEffect(() => {
     handlersRef.current = handlers;
-  });
+  }, [handlers]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

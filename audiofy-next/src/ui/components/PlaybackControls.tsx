@@ -17,7 +17,7 @@
 /**
  * PlaybackControls — play/pause/stop, progress bar, speed, loop, duration.
  */
-import { useCallback } from 'react';
+import { useCallback, memo } from 'react';
 import { useAppStore } from '@store';
 
 interface PlaybackControlsProps {
@@ -33,7 +33,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}.${ms}`;
 }
 
-export function PlaybackControls({
+export const PlaybackControls = memo(function PlaybackControls({
   onStop,
   onTogglePlayPause,
   onSeekProgress,
@@ -145,4 +145,4 @@ export function PlaybackControls({
       </button>
     </div>
   );
-}
+});

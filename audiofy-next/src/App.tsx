@@ -21,6 +21,7 @@
 import { useEffect, useCallback, useMemo, useRef, useState, Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { useAppStore } from '@store';
+import { useShallow } from 'zustand/react/shallow';
 import { useAudioEngine, useSyncController, useFileImport, useKeyboardShortcuts } from '@ui/hooks';
 import { Toolbar } from '@ui/components/Toolbar';
 import { SourceList } from '@ui/components/SourceList';
@@ -96,16 +97,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 export default function App() {
-  const sources = useAppStore((s) => s.sources);
-  const activePoints = useAppStore((s) => s.activePoints);
-  const progress = useAppStore((s) => s.progress);
-  const visualizationConfig = useAppStore((s) => s.visualizationConfig);
-  const settingsPanelOpen = useAppStore((s) => s.settingsPanelOpen);
-  const error = useAppStore((s) => s.error);
-  const loading = useAppStore((s) => s.loading);
+  const { sources, activePoints, progress, visualizationConfig, settingsPanelOpen, error, loading, pendingImport } =
+    useAppStore(
+      useShallow((s) => ({
+        sources: s.sources,
+        activePoints: s.activePoints,
+        progress: s.progress,
+        visualizationConfig: s.visualizationConfig,
+        settingsPanelOpen: s.settingsPanelOpen,
+        error: s.error,
+        loading: s.loading,
+        pendingImport: s.pendingImport,
+      })),
+    );
   const setError = useAppStore((s) => s.setError);
   const toggleSettingsPanel = useAppStore((s) => s.toggleSettingsPanel);
-  const pendingImport = useAppStore((s) => s.pendingImport);
   const setPendingImport = useAppStore((s) => s.setPendingImport);
   const addSource = useAppStore((s) => s.addSource);
 
@@ -452,7 +458,15 @@ export default function App() {
                 <div
                   className={`drop-zone ${dragOver ? 'drop-zone-active' : ''}`}
                   aria-dropeffect="execute"
-                  aria-label="Drop zone: accepts .xlsx, .csv, .tsv, .ods, .json files"
+                  aria-label="Drop zone: accepts .xlsx, .csv, .tsv, .ods, .json files. Press Enter to open file dialog."
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openFileDialog();
+                    }
+                  }}
                 >
                   <div className="drop-zone-icon" aria-hidden="true">
                     &#128202;

@@ -18,10 +18,10 @@
  * SourceList — displays loaded data sources with color indicators,
  * selection, remove buttons, and full keyboard navigation.
  */
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, memo } from 'react';
 import { useAppStore } from '@store';
 
-export function SourceList() {
+export const SourceList = memo(function SourceList() {
   const sources = useAppStore((s) => s.sources);
   const selectedSourceId = useAppStore((s) => s.selectedSourceId);
   const selectSource = useAppStore((s) => s.selectSource);
@@ -168,4 +168,4 @@ export function SourceList() {
       </div>
     </div>
   );
-}
+});
