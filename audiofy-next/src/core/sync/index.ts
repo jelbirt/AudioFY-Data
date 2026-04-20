@@ -63,19 +63,16 @@ export interface SyncControllerOptions {
 // ---------------------------------------------------------------------------
 
 /**
- * Given sorted notes and a current time, find all notes currently sounding.
+ * Given notes and a current time, find all notes currently sounding.
  * A note is active if time >= note.time && time < note.time + note.duration.
  *
- * Notes MUST be sorted by time for the early-exit optimization.
- * If unsorted input is suspected, call sortNotesByTime() first.
+ * Scans all notes (O(n)) so overlapping notes with long durations earlier in
+ * the array are not missed by a premature early-exit on a later short note.
  */
 export function findActivePoints(notes: ScheduledNote[], currentTime: number): ActivePoint[] {
   const active: ActivePoint[] = [];
 
   for (const note of notes) {
-    // Early exit: all remaining notes are in the future (relies on sorted input)
-    if (note.time > currentTime) break;
-
     if (currentTime >= note.time && currentTime < note.time + note.duration) {
       active.push({ sourceId: note.sourceId, pointIndex: note.pointIndex });
     }
@@ -99,6 +96,26 @@ export function sortNotesByTime(notes: ScheduledNote[]): ScheduledNote[] {
   return [...notes].sort((a, b) => a.time - b.time);
 }
 
+/**
+ * Compute a stable semantic fingerprint over every source field that
+ * scheduleSonification / addSource actually read, so prepare() can cheaply
+ * detect when a re-schedule is required beyond just source-ID changes.
+ *
+ * rows.length is included as a cheap guard against point-count changes under
+ * the same id; full rows content is intentionally omitted to keep this O(n)
+ * in sources rather than O(n*m) in dataset size.
+ */
+export function computeSourcesFingerprint(sources: DataSource[]): string {
+  return JSON.stringify(
+    sources.map((s) => ({
+      id: s.id,
+      n: s.rows.length,
+      norm: s.normalization,
+      am: s.audioMapping,
+    })),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Controller
 // ---------------------------------------------------------------------------
@@ -110,8 +127,7 @@ export class SyncController {
   private listeners: SyncStateCallback[] = [];
   private _state: SyncState;
   private _preparedSources: DataSource[] = [];
-  private unsubNoteStart: (() => void) | null = null;
-  private unsubNoteEnd: (() => void) | null = null;
+  private _preparedFingerprint: string | null = null;
 
   constructor(engine: AudioEngine, options: SyncControllerOptions = {}) {
     this.engine = engine;
@@ -147,16 +163,21 @@ export class SyncController {
   prepare(sources: DataSource[], duration?: number): void {
     const dur = duration ?? this._state.totalDuration;
 
-    // Skip re-preparation if sources are identical (same IDs in same order)
-    const sameAsBefore =
-      sources.length === this._preparedSources.length &&
-      sources.every((s, i) => s.id === this._preparedSources[i].id);
-    if (sameAsBefore && dur === this._state.totalDuration && this.scheduledNotes.length > 0) {
+    // Semantic fingerprint: covers every field read by engine.addSource and
+    // engine.scheduleSonification -> computeNotes. ID-only comparison would
+    // miss edits to normalization / audioMapping that yield the same source ID.
+    const fingerprint = computeSourcesFingerprint(sources);
+    if (
+      fingerprint === this._preparedFingerprint &&
+      dur === this._state.totalDuration &&
+      this.scheduledNotes.length > 0
+    ) {
       return;
     }
 
-    // Store sources for re-preparation on speed/duration changes
+    // Store sources + fingerprint for re-preparation on speed/duration changes
     this._preparedSources = sources;
+    this._preparedFingerprint = fingerprint;
 
     // Add sources to engine
     for (const src of sources) {
@@ -172,34 +193,6 @@ export class SyncController {
 
     // Update state
     this.updateState({ totalDuration: dur, currentTime: 0, progress: 0 });
-
-    // Register engine callbacks for event-driven note tracking
-    // Clean up any existing callbacks from a previous prepare() call
-    if (this.unsubNoteStart) {
-      this.unsubNoteStart();
-      this.unsubNoteStart = null;
-    }
-    if (this.unsubNoteEnd) {
-      this.unsubNoteEnd();
-      this.unsubNoteEnd = null;
-    }
-
-    this.unsubNoteStart = this.engine.onNoteStart((sourceId, pointIndex, _time) => {
-      const existing = this._state.activePoints;
-      if (!existing.some((ap) => ap.sourceId === sourceId && ap.pointIndex === pointIndex)) {
-        this.updateState({
-          activePoints: [...existing, { sourceId, pointIndex }],
-        });
-      }
-    });
-
-    this.unsubNoteEnd = this.engine.onNoteEnd((sourceId, pointIndex, _time) => {
-      this.updateState({
-        activePoints: this._state.activePoints.filter(
-          (ap) => !(ap.sourceId === sourceId && ap.pointIndex === pointIndex),
-        ),
-      });
-    });
   }
 
   /**
@@ -306,21 +299,10 @@ export class SyncController {
    */
   dispose(): void {
     this.stopProgressLoop();
-    try {
-      this.unsubNoteStart?.();
-    } catch {
-      // Engine may already be disposed
-    }
-    this.unsubNoteStart = null;
-    try {
-      this.unsubNoteEnd?.();
-    } catch {
-      // Engine may already be disposed
-    }
-    this.unsubNoteEnd = null;
     this.listeners = [];
     this.scheduledNotes = [];
     this._preparedSources = [];
+    this._preparedFingerprint = null;
   }
 
   // -----------------------------------------------------------------------

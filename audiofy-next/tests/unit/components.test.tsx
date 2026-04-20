@@ -16,14 +16,25 @@
 
 /**
  * Component tests for ScatterPlot and DataTable React components.
+ *
+ * NOTE: D3 effects run against jsdom's partial SVG support (no getBBox,
+ * no computed layout, etc.) and may silently fail inside useEffect. These
+ * tests verify React render-tree structure and event wiring, NOT D3
+ * rendering correctness (axes, ticks, data-point circles, zoom transforms).
+ * Visual/D3-specific behavior is covered by Playwright e2e tests.
+ *
+ * The `afterEach` hook below fails any test that produced a `console.error`
+ * so that silent D3/React failures surface instead of passing quietly.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { VisualizationConfig } from '../../src/types';
 
 // ---------------------------------------------------------------------------
-// D3 mock — jsdom doesn't support full SVG, so we mock d3 partially
+// D3 mock — jsdom doesn't support full SVG, so we mock d3 partially.
+// See the file-level NOTE above: D3 effects may silently no-op under jsdom,
+// so we do NOT rely on D3-rendered output in any assertion below.
 // ---------------------------------------------------------------------------
 
 vi.mock('d3', async () => {
@@ -33,6 +44,28 @@ vi.mock('d3', async () => {
     // The real d3.select works on jsdom elements but SVG rendering
     // is limited. We'll test component render output, not D3 internals.
   };
+});
+
+// ---------------------------------------------------------------------------
+// console.error watcher — surfaces silent failures from D3 effects or React
+// error boundaries. Any console.error during a test will fail that test.
+// ---------------------------------------------------------------------------
+
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  const calls = consoleErrorSpy.mock.calls;
+  consoleErrorSpy.mockRestore();
+  if (calls.length > 0) {
+    throw new Error(
+      `Unexpected console.error during test (${calls.length} call(s)): ` +
+        calls.map((c) => c.map((a) => String(a)).join(' ')).join(' | '),
+    );
+  }
 });
 
 // Import components AFTER mocks
@@ -69,6 +102,7 @@ function makeSource(overrides: Partial<DataSource> = {}): DataSource {
       panRange: [-0.8, 0.8],
       waveform: 'sine',
       envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+      sourceVolume: 1,
     },
     ...overrides,
   };

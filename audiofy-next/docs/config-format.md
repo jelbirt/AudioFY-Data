@@ -1,6 +1,6 @@
-# Project Configuration Format
+# Settings Configuration Format
 
-AudioFY project files are JSON documents with a `.json` extension (conventionally named `audiofy-project.json`). They store all application settings but **not** the raw data — original data files must be available when loading a project.
+AudioFY settings files are JSON documents with a `.json` extension (conventionally named `audiofy-settings.json`). They store playback, visualization, and audio configuration — they do **not** store data sources or raw data, so original spreadsheet files must be re-opened after loading settings.
 
 ## Schema Version
 
@@ -36,14 +36,15 @@ Each source represents one imported data file/sheet and its sonification configu
     "frequencyRange": [200, 2000],
     "frequencyScale": "log",
     "volumeRange": [0.1, 0.8],
-    "panRange": [-1, 1],
+    "panRange": [-0.8, 0.8],
     "waveform": "sine",
     "envelope": {
       "attack": 0.02,
       "decay": 0.1,
       "sustain": 0.3,
       "release": 0.5
-    }
+    },
+    "sourceVolume": 1.0
   }
 }
 ```
@@ -66,9 +67,10 @@ Each source represents one imported data file/sheet and its sonification configu
 | `frequencyRange` | [number, number] | Min and max frequency in Hz (20–20,000) |
 | `frequencyScale` | enum | `"log"`, `"linear"`, `"midi"` |
 | `volumeRange` | [number, number] | Min and max volume (0–1) |
-| `panRange` | [number, number] | Stereo pan range (-1 left to 1 right) |
+| `panRange` | [number, number] | Stereo pan range. Allowed: -1.0 (full left) to 1.0 (full right). Default: `[-0.8, 0.8]`. |
 | `waveform` | enum | `"sine"`, `"square"`, `"sawtooth"`, `"triangle"`, or FM/AM variants |
 | `envelope` | object | ADSR envelope (see below) |
+| `sourceVolume` | number | Per-source output gain, 0–1. Default: `1.0`. Applied to the source's gain node post-synth; distinct from `volumeRange` (per-note velocity) and `masterVolume` (global output). |
 
 ### ADSR Envelope
 

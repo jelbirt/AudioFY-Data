@@ -2,13 +2,13 @@
 
 **Data sonification and visualization desktop application.**
 
-AudioFY takes tabular data (Excel, CSV, TSV, ODS, JSON) and simultaneously presents it as an animated scatter plot, synchronized data table, and sonified audio — allowing users to *hear* and *see* their data at the same time.
+AudioFY takes tabular data (Excel, CSV, TSV, JSON) and simultaneously presents it as an animated scatter plot, synchronized data table, and sonified audio — allowing users to *hear* and *see* their data at the same time.
 
 Built with [Tauri v2](https://v2.tauri.app/), [React](https://react.dev/), [Tone.js](https://tonejs.github.io/), and [D3.js](https://d3js.org/).
 
 ## Features
 
-- **Multi-format import** — xlsx, xls, csv, tsv, ods, json with automatic header detection
+- **Multi-format import** — xlsx, xls, csv, tsv, json with automatic header detection
 - **Data sonification** — Maps data values to frequency, volume, and stereo panning with configurable waveforms (sine, square, sawtooth, triangle, FM/AM variants) and full ADSR envelopes
 - **Interactive scatter plot** — D3.js SVG with zoom/pan, color-coded multi-source rendering, animated point highlighting during playback, tooltips, and legend
 - **Synchronized data table** — Virtualized auto-scrolling, sortable columns, statistical footer, color-coded rows matching the scatter plot
@@ -17,7 +17,7 @@ Built with [Tauri v2](https://v2.tauri.app/), [React](https://react.dev/), [Tone
 - **Frequency mapping** — Logarithmic (perceptually uniform), linear, and MIDI scale-constrained
 - **Polyphonic playback** — Up to 16 simultaneous voices per data source with spatial audio panning
 - **Playback controls** — Play/pause/stop, speed (0.25x–4x), loop, seek/scrub
-- **Configuration persistence** — Save/load project config files with versioned JSON schema and Zod validation
+- **Configuration persistence** — Save/load **settings files** (playback, visualization, audio) as versioned JSON with Zod validation; data sources are re-imported from the original spreadsheet files
 - **Export** — SVG, PNG (2x resolution), and audio (WebM/Opus) export
 - **Audio effects** — Reverb, filter (8 types), and chorus with full UI controls
 - **Sheet selection** — Multi-sheet file import with preview modal and column mapping

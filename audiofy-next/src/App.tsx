@@ -32,7 +32,7 @@ import { DataTable } from '@core/visualization/DataTable';
 import { exportSVG, exportPNG, exportAudio } from '@core/export';
 import { buildDataSource } from '@core/data';
 import { serializeConfig, validateConfig, migrateConfig } from '@core/config';
-import type { AudioFYConfig, SourceConfig } from '@types';
+import type { AudioFYConfig } from '@types';
 import '@ui/styles/app.css';
 
 // ---------------------------------------------------------------------------
@@ -67,23 +67,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div
-          role="alert"
-          style={{
-            padding: 32,
-            textAlign: 'center',
-            color: 'var(--danger, #ff3b30)',
-            background: 'var(--bg-primary, #fff)',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600 }}>Something went wrong</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary, #666)', maxWidth: 400 }}>
+        <div role="alert" className="error-boundary">
+          <h2 className="error-boundary-title">Something went wrong</h2>
+          <p className="error-boundary-message">
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
           <button className="btn" onClick={() => this.setState({ hasError: false, error: null })}>
@@ -196,26 +182,17 @@ export default function App() {
     }
   }, [handlePlay, sync]);
 
-  // --- Save / Load project ---
+  // --- Save / Load settings ---
   const updatePlaybackConfig = useAppStore((s) => s.updatePlaybackConfig);
   const updateVisualizationConfig = useAppStore((s) => s.updateVisualizationConfig);
   const updateAudioConfig = useAppStore((s) => s.updateAudioConfig);
 
   const handleSaveProject = useCallback(() => {
     const state = useAppStore.getState();
-    const sourceConfigs: SourceConfig[] = state.sources.map((s) => ({
-      filePath: s.fileName,
-      sheetName: s.sheetName,
-      xColumn: s.audioMapping.xColumn,
-      yColumn: s.audioMapping.yColumn,
-      color: s.color,
-      normalization: s.normalization,
-      audioMapping: s.audioMapping,
-    }));
 
     const config: AudioFYConfig = {
       version: 2,
-      sources: sourceConfigs,
+      sources: [],
       playback: state.playbackConfig,
       visualization: state.visualizationConfig,
       audio: state.audioConfig,
@@ -226,11 +203,11 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'audiofy-project.json';
+    a.download = 'audiofy-settings.json';
     a.click();
     // Defer revocation to avoid racing with the browser's download initiation
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setNotification('Project saved');
+    setNotification('Settings saved');
   }, [setNotification]);
 
   const handleLoadProject = useCallback(() => {
@@ -248,7 +225,7 @@ export default function App() {
         try {
           data = JSON.parse(text);
         } catch {
-          setError('Invalid project file: not valid JSON');
+          setError('Invalid settings file: not valid JSON');
           return;
         }
 
@@ -261,7 +238,7 @@ export default function App() {
         }
 
         if (!result.success || !result.config) {
-          setError(`Invalid project file: ${result.errors.join(', ')}`);
+          setError(`Invalid settings file: ${result.errors.join(', ')}`);
           return;
         }
 
@@ -271,9 +248,9 @@ export default function App() {
         updatePlaybackConfig(config.playback);
         updateVisualizationConfig(config.visualization);
         updateAudioConfig(config.audio);
-        setNotification('Project loaded');
+        setNotification('Settings loaded');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load project');
+        setError(err instanceof Error ? err.message : 'Failed to load settings');
       }
     };
 
@@ -344,7 +321,8 @@ export default function App() {
       const { parsedFile, fileName } = pendingImport;
       try {
         const sheet = parsedFile.sheets[sheetIndex];
-        const source = buildDataSource(sheet, fileName);
+        const existingSources = useAppStore.getState().sources;
+        const source = buildDataSource(sheet, fileName, { existingSources });
         addSource(source, parsedFile);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to import sheet');
@@ -397,7 +375,7 @@ export default function App() {
     try {
       await initialize();
       const duration = playbackConfig.duration;
-      await exportAudio(() => sync.prepare(), duration);
+      await exportAudio(() => sync.prepare(), duration, undefined, undefined, playbackConfig.speed);
       setNotification('Audio exported');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audio export failed');
@@ -487,7 +465,7 @@ export default function App() {
                 <div
                   className={`drop-zone ${dragOver ? 'drop-zone-active' : ''}`}
                   aria-dropeffect="execute"
-                  aria-label="Drop zone: accepts .xlsx, .csv, .tsv, .ods, .json files. Press Enter to open file dialog."
+                  aria-label="Drop zone: accepts .xlsx, .csv, .tsv, .json files. Press Enter to open file dialog."
                   tabIndex={0}
                   role="button"
                   onKeyDown={(e) => {
@@ -502,7 +480,7 @@ export default function App() {
                   </div>
                   <div>Drop a spreadsheet here or click Open File</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                    Supports .xlsx, .csv, .tsv, .ods, .json
+                    Supports .xlsx, .csv, .tsv, .json
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                     Or press <kbd>Ctrl+O</kbd> to open the file dialog

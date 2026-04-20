@@ -53,10 +53,19 @@ const DEFAULT_COLORS = [
   '#ff8042',
 ];
 
+function pickColorIndex(existingSources?: DataSource[]): number {
+  if (!existingSources || existingSources.length === 0) return 0;
+  const used = new Set(existingSources.map((s) => s.color));
+  for (let i = 0; i < DEFAULT_COLORS.length; i++) {
+    if (!used.has(DEFAULT_COLORS[i])) return i;
+  }
+  return existingSources.length % DEFAULT_COLORS.length;
+}
+
 /**
  * Create a DataSource from a file buffer + sheet selection.
  */
-export function createDataSource(
+export async function createDataSource(
   data: ArrayBuffer | string,
   fileName: string,
   options: {
@@ -65,9 +74,10 @@ export function createDataSource(
     yColumn?: number;
     color?: string;
     normalization?: NormalizationMode;
+    existingSources?: DataSource[];
   } = {},
-): { parsedFile: ParsedFile; source: DataSource } {
-  const parsedFile = parseFile(data, fileName);
+): Promise<{ parsedFile: ParsedFile; source: DataSource }> {
+  const parsedFile = await parseFile(data, fileName);
   const sheetIndex = options.sheetIndex ?? 0;
 
   if (parsedFile.sheets.length === 0) {
@@ -96,6 +106,7 @@ export function buildDataSource(
     yColumn?: number;
     color?: string;
     normalization?: NormalizationMode;
+    existingSources?: DataSource[];
   } = {},
 ): DataSource {
   const numericCols = sheet.numericColumns;
@@ -120,18 +131,21 @@ export function buildDataSource(
     };
   });
 
-  // Extract numeric rows (only numeric columns)
+  // Extract numeric rows (only numeric columns). Non-numeric / missing cells
+  // become NaN so that downstream consumers (stats, normalization, audio
+  // engine, scatter plot, data table) can explicitly skip them rather than
+  // silently mapping blanks to 0 (which pinned the minimum frequency).
   const rows: number[][] = sheet.data
     .map((row) =>
       numericCols.map((colIndex) => {
         const val = row[colIndex];
-        return typeof val === 'number' ? val : 0;
+        return typeof val === 'number' ? val : NaN;
       }),
     )
-    .filter((row) => row.some((v) => !Number.isNaN(v))); // remove rows that are entirely NaN
+    .filter((row) => row.some((v) => !Number.isNaN(v))); // keep rows that have at least one non-NaN value
 
   const id = generateSourceId();
-  const colorIndex = ((sourceIdCounter - 1) % DEFAULT_COLORS.length);
+  const colorIndex = pickColorIndex(options.existingSources);
 
   const normalization = options.normalization ?? 'min-max';
 
@@ -144,6 +158,7 @@ export function buildDataSource(
     panRange: [-0.8, 0.8],
     waveform: 'sine',
     envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+    sourceVolume: 1,
   };
 
   return {

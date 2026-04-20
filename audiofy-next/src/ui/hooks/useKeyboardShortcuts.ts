@@ -52,6 +52,14 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
       // Don't capture inside open dialogs/modals unless the shortcut is Escape
       if (e.key !== 'Escape' && target.closest('[role="dialog"], dialog')) return;
 
+      // Space and Enter are ARIA activation keys for role="button"; don't steal
+      // them from focused button-like elements (e.g. the drop-zone).
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (target.getAttribute('role') === 'button' || target.closest('[role="button"]')) {
+          return;
+        }
+      }
+
       const h = handlersRef.current;
       switch (e.key) {
         case ' ':

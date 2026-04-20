@@ -185,7 +185,7 @@ test.describe('Settings Panel', () => {
     await page.getByRole('button', { name: 'Settings' }).click();
 
     await expect(page.getByLabel('Reverb')).toBeVisible();
-    await expect(page.getByLabel('Low-pass Filter')).toBeVisible();
+    await expect(page.getByLabel('Filter')).toBeVisible();
   });
 
   test('can change theme to dark', async ({ page }) => {

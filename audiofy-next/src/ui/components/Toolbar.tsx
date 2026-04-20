@@ -52,13 +52,24 @@ export const Toolbar = memo(function Toolbar({
   return (
     <div className="app-toolbar" role="toolbar" aria-label="Main toolbar">
       <div className="toolbar-group">
-        <button className="btn" onClick={onOpenFile} title="Open file (Ctrl+O)">
+        <button
+          className="btn"
+          onClick={onOpenFile}
+          title="Open file (Ctrl+O)"
+          data-initial-focus
+        >
           Open File
         </button>
-        <button className="btn" onClick={onSaveProject} disabled={!hasData} title="Save project (Ctrl+S)">
+        <button
+          className="btn"
+          onClick={onSaveProject}
+          disabled={!hasData}
+          title="Save settings (Ctrl+S)"
+          aria-label="Save settings"
+        >
           Save
         </button>
-        <button className="btn" onClick={onLoadProject} title="Load project">
+        <button className="btn" onClick={onLoadProject} title="Load settings" aria-label="Load settings">
           Load
         </button>
       </div>

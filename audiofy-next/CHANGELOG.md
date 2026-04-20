@@ -4,6 +4,14 @@ All notable changes to AudioFY are documented here.
 
 ## [Unreleased]
 
+### Changed — Security & data integrity
+- Replaced `xlsx@0.18.5` with `papaparse` + `exceljs` to close prototype-pollution (CVE-2023-30533) and ReDoS (GHSA-5pgg-2g8v-p4x9) advisories. ODS import is no longer supported — convert ODS files to XLSX or CSV.
+- Missing/non-numeric cells now propagate as `NaN` end-to-end instead of being silently filled with `0`. Rows with `NaN` in the mapped X/Y columns are skipped by the audio engine, omitted from the scatter plot, and rendered as an em-dash (`—`) in the data table. Stats ignore `NaN` inputs, and normalization preserves `NaN` outputs.
+- `ParsedSheet` now carries `columnQuality: ColumnQuality[]` through the worker boundary so the import preview can surface per-column data-quality metrics.
+
+### Added — UX
+- **Sparse-column warning badge** — the import preview modal now flags any numeric column whose populated ratio is below 90% (at least 10% blank), showing the blank percentage and an explanation that missing data will be skipped during playback and not plotted.
+
 ### Added — Phase 3: Performance
 - **Virtualized data table** — renders only visible rows with a 10-row overscan buffer, enabling smooth scrolling for large datasets. Added `aria-rowindex` and `aria-rowcount` for accessibility.
 - **Optimized scatter plot rendering** — decoupled SVG structure setup from data point updates. Changing data sources no longer triggers a full SVG rebuild.
@@ -12,7 +20,7 @@ All notable changes to AudioFY are documented here.
 ### Added — Phase 2: Core UX
 - **Sheet selection modal** — when importing multi-sheet files (xlsx, ods), a modal lets users preview each sheet's first 5 rows and select which one to import. Numeric columns are marked with `#`, and a warning appears if fewer than 2 numeric columns are found.
 - **X/Y column selectors** — dropdowns in the settings panel to remap which columns are used for the X and Y axes without re-importing.
-- **Save/Load projects** — Save button (or `Ctrl+S`) exports all settings to an `audiofy-project.json` file. Load button restores settings from a previously saved file with full Zod schema validation.
+- **Save/Load settings** — Save button (or `Ctrl+S`) exports playback, visualization, and audio configuration to an `audiofy-settings.json` file. Load button restores settings from a previously saved file with full Zod schema validation. Data sources are re-imported from the original spreadsheet files.
 - **Expanded test coverage** — added tests for audio export, store operations (pending import, column mapping, config restoration), bringing the suite to 277 tests.
 
 ### Added — Phase 1: Quick Wins

@@ -28,11 +28,20 @@ interface ImportPreviewModalProps {
   onCancel: () => void;
 }
 
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, onConfirm, onCancel }: ImportPreviewModalProps) {
   const { parsedFile } = pending;
   const [selectedSheet, setSelectedSheet] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
+  const onCancelRef = useRef(onCancel);
+
+  // Keep latest onCancel accessible from the mount-only effect without retrapping focus.
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  }, [onCancel]);
 
   // Clamp selectedSheet to valid range (defensive)
   const hasSheets = parsedFile.sheets.length > 0;
@@ -43,46 +52,83 @@ export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, on
     ? parsedFile.sheets[safeSheetIndex]
     : undefined;
 
-  // Focus trap: focus the dialog on mount, restore focus on unmount
+  // Focus trap: focus the dialog on mount, trap Tab/Shift+Tab inside it,
+  // handle Escape, and restore focus on unmount with a graceful fallback.
   useEffect(() => {
-    prevFocusRef.current = document.activeElement as HTMLElement;
-    dialogRef.current?.focus();
-    return () => {
-      prevFocusRef.current?.focus();
-    };
-  }, []);
+    const dialog = dialogRef.current;
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    dialog?.focus();
 
-  // Close on Escape and trap focus within the dialog
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    // Attach keydown to the dialog container (not the backdrop) so the
+    // listener fires reliably for events originating inside the dialog.
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onCancel();
+        e.stopPropagation();
+        onCancelRef.current();
         return;
       }
-      if (e.key === 'Tab') {
-        const dialog = dialogRef.current;
-        if (!dialog) return;
-        const focusable = dialog.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      if (e.key === 'Tab' && dialog) {
+        const focusable = Array.from(
+          dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+        ).filter(
+          (el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
         );
-        if (focusable.length === 0) return;
+        if (focusable.length === 0) {
+          e.preventDefault();
+          dialog.focus();
+          return;
+        }
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        // If focus escaped the dialog entirely, pull it back to the first element.
+        if (!active || !dialog.contains(active)) {
+          e.preventDefault();
+          first.focus();
+          return;
+        }
         if (e.shiftKey) {
-          if (document.activeElement === first) {
+          if (active === first || active === dialog) {
             e.preventDefault();
             last.focus();
           }
         } else {
-          if (document.activeElement === last) {
+          if (active === last) {
             e.preventDefault();
             first.focus();
           }
         }
       }
-    },
-    [onCancel],
-  );
+    };
+
+    dialog?.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      dialog?.removeEventListener('keydown', handleKeyDown);
+
+      // Restore focus to previously-focused element if it still exists in DOM.
+      const prev = prevFocusRef.current;
+      if (prev && document.body.contains(prev)) {
+        prev.focus();
+        return;
+      }
+      // Fallback: a stable anchor marked by the host app.
+      const anchor = document.querySelector<HTMLElement>('[data-initial-focus]');
+      if (anchor) {
+        anchor.focus();
+        return;
+      }
+      // Dev-only warning: focus will fall through to <body>.
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[ImportPreviewModal] Could not restore focus: previous element no longer in DOM and no [data-initial-focus] anchor found.',
+        );
+      }
+    };
+    // Mount-only: listener and cleanup own their lifecycle via onCancelRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConfirm = useCallback(() => {
     onConfirm(safeSheetIndex);
@@ -91,10 +137,10 @@ export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, on
   // Guard: if there are no sheets, show an error state
   if (!sheet) {
     return (
-      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Import error">
+      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="import-preview-title">
         <div className="modal-content" ref={dialogRef} tabIndex={-1}>
           <div className="modal-header">
-            <h2 className="modal-title">Import: {pending.fileName}</h2>
+            <h2 className="modal-title" id="import-preview-title">Import: {pending.fileName}</h2>
             <button className="btn modal-close" onClick={onCancel} aria-label="Close">&times;</button>
           </div>
           <div className="modal-body">
@@ -117,12 +163,11 @@ export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, on
       className="modal-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label={`Import preview: ${pending.fileName}`}
-      onKeyDown={handleKeyDown}
+      aria-labelledby="import-preview-title"
     >
       <div className="modal-content" ref={dialogRef} tabIndex={-1}>
         <div className="modal-header">
-          <h2 className="modal-title">Import: {pending.fileName}</h2>
+          <h2 className="modal-title" id="import-preview-title">Import: {pending.fileName}</h2>
           <button
             className="btn modal-close"
             onClick={onCancel}
@@ -159,19 +204,42 @@ export const ImportPreviewModal = memo(function ImportPreviewModal({ pending, on
             <table className="data-table" style={{ fontSize: 11, width: '100%' }}>
               <thead>
                 <tr>
-                  {headers.map((h, i) => (
-                    <th key={i} style={{ padding: '4px 6px', textAlign: 'left' }}>
-                      {h || `Col ${i + 1}`}
-                      {sheet.numericColumns.includes(i) && (
-                        <span
-                          style={{ color: 'var(--accent)', marginLeft: 4, fontSize: 9 }}
-                          title="Numeric column"
-                        >
-                          #
-                        </span>
-                      )}
-                    </th>
-                  ))}
+                  {headers.map((h, i) => {
+                    // Sparse-column warning: the column passes the numeric
+                    // threshold but is at least 10% blank. Missing cells
+                    // become NaN and are skipped during playback/rendering.
+                    const q = sheet.columnQuality?.find((cq) => cq.index === i);
+                    const isSparseNumeric = q && q.isNumeric && q.populatedRatio < 0.9;
+                    const blankPct = q ? Math.round((1 - q.populatedRatio) * 100) : 0;
+                    return (
+                      <th key={i} style={{ padding: '4px 6px', textAlign: 'left' }}>
+                        {h || `Col ${i + 1}`}
+                        {sheet.numericColumns.includes(i) && (
+                          <span
+                            style={{ color: 'var(--accent)', marginLeft: 4, fontSize: 9 }}
+                            title="Numeric column"
+                          >
+                            #
+                          </span>
+                        )}
+                        {isSparseNumeric && (
+                          <span
+                            className="sparse-column-badge"
+                            style={{
+                              marginLeft: 6,
+                              fontSize: 9,
+                              color: 'var(--warning)',
+                              fontWeight: 500,
+                            }}
+                            title={`This column has ${blankPct}% blank values. Missing data will be skipped in playback and not shown on the chart.`}
+                            aria-label={`Warning: ${blankPct}% blank`}
+                          >
+                            {`\u26A0 ${blankPct}% blank`}
+                          </span>
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>

@@ -72,14 +72,9 @@ export function parseFileAsync(data: ArrayBuffer, fileName: string): Promise<Par
   const w = getWorker();
 
   if (!w) {
-    // Fallback: synchronous parse wrapped in a promise
-    return new Promise((resolve, reject) => {
-      try {
-        resolve(parseFile(data, fileName));
-      } catch (err) {
-        reject(err);
-      }
-    });
+    // Fallback: parse on the main thread (still async — XLSX parsing via
+    // exceljs is inherently async).
+    return parseFile(data, fileName);
   }
 
   return new Promise<ParsedFile>((resolve, reject) => {

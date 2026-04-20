@@ -185,7 +185,10 @@ export const ScatterPlot = memo(function ScatterPlot({
 
     const isDark = config.theme === 'dark';
     const textColor = isDark ? '#e0e0e0' : '#333';
-    const gridColor = isDark ? '#444' : '#e0e0e0';
+    // Grid color chosen to meet WCAG 1.4.11 (≥3:1 contrast with plot background):
+    //   light: #888 on #fafafa ≈ 3.28:1
+    //   dark:  #777 on #1a1a2e ≈ 3.84:1
+    const gridColor = isDark ? '#777' : '#888';
 
     // Clip path so points don't overflow axes
     svg
@@ -366,7 +369,10 @@ export const ScatterPlot = memo(function ScatterPlot({
 
     pointsGroup
       .selectAll<SVGCircleElement, PlotPoint>('.data-point')
-      .data(points, (d) => `${d.sourceId}-${d.pointIndex}`)
+      .data(
+        points.filter((d) => !Number.isNaN(d.x) && !Number.isNaN(d.y)),
+        (d) => `${d.sourceId}-${d.pointIndex}`,
+      )
       .join(
         (enter) =>
           enter

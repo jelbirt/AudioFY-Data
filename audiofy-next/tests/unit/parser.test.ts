@@ -15,16 +15,26 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { describe, it, expect } from 'vitest';
-import { parseFile, detectHeaders } from '../../src/core/data/parser';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { parseFile, detectHeaders, computeColumnQuality } from '../../src/core/data/parser';
 
 /** Helper to create an in-memory xlsx buffer from a 2D array */
-function createXlsxBuffer(data: (string | number | null)[][], sheetName = 'Sheet1'): ArrayBuffer {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  const buffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-  return buffer;
+async function createXlsxBuffer(
+  data: (string | number | null)[][],
+  sheetName = 'Sheet1',
+): Promise<ArrayBuffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet(sheetName);
+  for (const row of data) {
+    ws.addRow(row);
+  }
+  const buffer = await wb.xlsx.writeBuffer();
+  // exceljs returns a Node Buffer in Node or ArrayBuffer-like in browsers.
+  // Normalize to ArrayBuffer for our parser.
+  if (buffer instanceof ArrayBuffer) return buffer;
+  // Buffer is a Uint8Array in Node.
+  const u8 = buffer as unknown as Uint8Array;
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
 }
 
 /** Helper to create a CSV string */
@@ -73,15 +83,15 @@ describe('detectHeaders', () => {
 });
 
 describe('parseFile', () => {
-  it('parses xlsx with column headers', () => {
+  it('parses xlsx with column headers', async () => {
     const data = [
       ['X', 'Y', 'Z'],
       [1, 10, 100],
       [2, 20, 200],
       [3, 30, 300],
     ];
-    const buffer = createXlsxBuffer(data);
-    const result = parseFile(buffer, 'test.xlsx');
+    const buffer = await createXlsxBuffer(data);
+    const result = await parseFile(buffer, 'test.xlsx');
 
     expect(result.fileName).toBe('test.xlsx');
     expect(result.sheets).toHaveLength(1);
@@ -91,56 +101,94 @@ describe('parseFile', () => {
     expect(result.sheets[0].numericColumns).toEqual([0, 1, 2]);
   });
 
-  it('parses xlsx with row and column headers', () => {
+  it('parses xlsx with row and column headers', async () => {
     const data = [
       ['', 'Score', 'Grade'],
       ['Alice', 90, 4.0],
       ['Bob', 85, 3.5],
     ];
-    const buffer = createXlsxBuffer(data);
-    const result = parseFile(buffer, 'test.xlsx');
+    const buffer = await createXlsxBuffer(data);
+    const result = await parseFile(buffer, 'test.xlsx');
 
     expect(result.sheets[0].headers.row).toEqual(['Alice', 'Bob']);
     expect(result.sheets[0].headers.col).toEqual(['Score', 'Grade']);
   });
 
-  it('parses purely numeric data (no headers)', () => {
+  it('parses purely numeric data (no headers)', async () => {
     const data = [
       [1, 2, 3],
       [4, 5, 6],
       [7, 8, 9],
     ];
-    const buffer = createXlsxBuffer(data);
-    const result = parseFile(buffer, 'numbers.xlsx');
+    const buffer = await createXlsxBuffer(data);
+    const result = await parseFile(buffer, 'numbers.xlsx');
 
     expect(result.sheets[0].headers.col).toEqual(['Column 1', 'Column 2', 'Column 3']);
     expect(result.sheets[0].data).toHaveLength(3);
     expect(result.sheets[0].numericColumns).toEqual([0, 1, 2]);
   });
 
-  it('parses CSV string', () => {
+  it('parses CSV string', async () => {
     const csv = createCsv([
       ['x', 'y'],
       ['1', '10'],
       ['2', '20'],
       ['3', '30'],
     ]);
-    const result = parseFile(csv, 'data.csv');
+    const result = await parseFile(csv, 'data.csv');
 
     expect(result.sheets).toHaveLength(1);
     expect(result.sheets[0].headers.col).toEqual(['x', 'y']);
     expect(result.sheets[0].data.length).toBe(3);
   });
 
-  it('handles null/empty cells', () => {
-    const data = [
+  it('parses TSV string', async () => {
+    const tsv = 'x\ty\n1\t10\n2\t20\n3\t30';
+    const result = await parseFile(tsv, 'data.tsv');
+
+    expect(result.sheets).toHaveLength(1);
+    expect(result.sheets[0].headers.col).toEqual(['x', 'y']);
+    expect(result.sheets[0].data.length).toBe(3);
+    expect(result.sheets[0].data[0][0]).toBe(1);
+    expect(result.sheets[0].data[0][1]).toBe(10);
+  });
+
+  it('parses JSON array-of-arrays', async () => {
+    const json = JSON.stringify([
+      ['x', 'y'],
+      [1, 10],
+      [2, 20],
+      [3, 30],
+    ]);
+    const result = await parseFile(json, 'data.json');
+
+    expect(result.sheets).toHaveLength(1);
+    expect(result.sheets[0].headers.col).toEqual(['x', 'y']);
+    expect(result.sheets[0].data.length).toBe(3);
+  });
+
+  it('parses JSON array-of-objects', async () => {
+    const json = JSON.stringify([
+      { x: 1, y: 10 },
+      { x: 2, y: 20 },
+      { x: 3, y: 30 },
+    ]);
+    const result = await parseFile(json, 'data.json');
+
+    expect(result.sheets).toHaveLength(1);
+    expect(result.sheets[0].headers.col).toEqual(['x', 'y']);
+    expect(result.sheets[0].data.length).toBe(3);
+  });
+
+  it('handles null/empty cells', async () => {
+    const data: (string | number | null)[][] = [
       ['X', 'Y'],
       [1, null],
       [null, 20],
       [3, 30],
     ];
-    const buffer = createXlsxBuffer(data);
-    const result = parseFile(buffer, 'sparse.xlsx');
+    const buffer = await createXlsxBuffer(data);
+    const result = await parseFile(buffer, 'sparse.xlsx');
 
     expect(result.sheets[0].data).toHaveLength(3);
     // Nulls should be preserved
@@ -148,19 +196,59 @@ describe('parseFile', () => {
     expect(result.sheets[0].data[1][0]).toBeNull();
   });
 
-  it('identifies numeric vs non-numeric columns', () => {
+  it('identifies numeric vs non-numeric columns', async () => {
     const data = [
       ['Name', 'Age', 'City', 'Score'],
       ['Alice', 25, 'NYC', 90],
       ['Bob', 30, 'LA', 85],
       ['Charlie', 35, 'CHI', 95],
     ];
-    const buffer = createXlsxBuffer(data);
-    const result = parseFile(buffer, 'mixed.xlsx');
+    const buffer = await createXlsxBuffer(data);
+    const result = await parseFile(buffer, 'mixed.xlsx');
 
     // After removing row header (Name column), Age=0 and Score=2 should be numeric
     // City=1 should not be numeric
     const numCols = result.sheets[0].numericColumns;
     expect(numCols.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('populates columnQuality on every parsed sheet', async () => {
+    const csv = createCsv([
+      ['x', 'y'],
+      ['1', '10'],
+      ['2', '20'],
+    ]);
+    const result = await parseFile(csv, 'data.csv');
+    expect(result.sheets[0].columnQuality).toBeDefined();
+    expect(result.sheets[0].columnQuality).toHaveLength(2);
+    expect(result.sheets[0].columnQuality?.[0].isNumeric).toBe(true);
+  });
+});
+
+describe('computeColumnQuality', () => {
+  it('marks dense numeric columns as isNumeric', () => {
+    const data: (string | number | null)[][] = [
+      [1, 10],
+      [2, 20],
+      [3, 30],
+      [4, 40],
+    ];
+    const quality = computeColumnQuality(data);
+    expect(quality[0].isNumeric).toBe(true);
+    expect(quality[1].isNumeric).toBe(true);
+    expect(quality[0].populatedRatio).toBe(1);
+  });
+
+  it('flags sparse columns via populatedRatio', () => {
+    const data: (string | number | null)[][] = [
+      [1, null],
+      [2, null],
+      [3, 30],
+      [4, null],
+    ];
+    const quality = computeColumnQuality(data);
+    // Col 1 has only one populated cell out of four
+    expect(quality[1].populatedRatio).toBeLessThan(0.5);
+    expect(quality[1].isNumeric).toBe(false);
   });
 });

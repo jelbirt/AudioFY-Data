@@ -56,6 +56,7 @@ function validConfig(): AudioFYConfig {
           panRange: [-0.8, 0.8],
           waveform: 'sine',
           envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+          sourceVolume: 1,
         },
       },
     ],
@@ -163,6 +164,15 @@ describe('validateConfig', () => {
     config.sources = [];
     const result = validateConfig(config);
     expect(result.success).toBe(true);
+  });
+
+  it('accepts legacy config without audioMapping.sourceVolume and defaults it to 1', () => {
+    const config = validConfig();
+    // Simulate an older config file that predates the sourceVolume field
+    delete (config.sources[0].audioMapping as Record<string, unknown>).sourceVolume;
+    const result = validateConfig(config);
+    expect(result.success).toBe(true);
+    expect(result.config?.sources[0].audioMapping.sourceVolume).toBe(1);
   });
 
   it('accepts dark theme', () => {

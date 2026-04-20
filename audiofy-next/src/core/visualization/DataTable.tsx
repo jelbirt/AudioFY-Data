@@ -18,7 +18,15 @@
  * DataTable — Synchronized data table with row highlighting during playback,
  * auto-scroll, color-coded source columns, sortable headers, and column stats.
  */
-import { useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useMemo,
+  useState,
+  useCallback,
+  type UIEvent,
+  type KeyboardEvent,
+} from 'react';
 import type { DataSource, ActivePoint, VisualizationConfig } from '@types';
 
 // ---------------------------------------------------------------------------
@@ -89,9 +97,16 @@ export function sortRows(
   if (direction === null) return rows;
 
   return [...rows].sort((a, b) => {
-    const aVal = a.values[columnIndex] ?? 0;
-    const bVal = b.values[columnIndex] ?? 0;
-    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+    const aRaw = a.values[columnIndex];
+    const bRaw = b.values[columnIndex];
+    // NaN / null values sort to the end regardless of direction so they don't
+    // disrupt the ordered region of the data.
+    const aNaN = aRaw == null || Number.isNaN(aRaw);
+    const bNaN = bRaw == null || Number.isNaN(bRaw);
+    if (aNaN && bNaN) return 0;
+    if (aNaN) return 1;
+    if (bNaN) return -1;
+    return direction === 'asc' ? aRaw - bRaw : bRaw - aRaw;
   });
 }
 
@@ -202,6 +217,18 @@ export function DataTable({
       return { columnIndex: colIndex, direction: 'asc' };
     });
   }, []);
+
+  // Row keyboard handler — Enter or Space triggers the same seek as onClick.
+  // Space is preventDefault'd to avoid the default page-scroll behavior.
+  const handleRowKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTableRowElement>, sourceId: string, pointIndex: number) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onRowClick?.(sourceId, pointIndex);
+      }
+    },
+    [onRowClick],
+  );
 
   const isDark = config.theme === 'dark';
   const showSourceColumn = sources.length > 1;
@@ -333,11 +360,26 @@ export function DataTable({
           {visibleRows.map((row, i) => {
             const absoluteIdx = startIdx + i;
             const active = isRowActive(row, activePoints);
+            const isInteractive = onRowClick != null;
+            // Build a descriptive label: row number + source (if shown) + value summary.
+            const valueSummary = row.values
+              .map((v) => (typeof v === 'number' && !Number.isNaN(v) ? v.toFixed(2) : '—'))
+              .join(', ');
+            const rowLabel = isInteractive
+              ? `Row ${row.pointIndex + 1}${showSourceColumn ? `, ${row.sourceName}` : ''}: ${valueSummary}. Press Enter or Space to seek.`
+              : undefined;
             return (
               <tr
                 key={`${row.sourceId}-${row.pointIndex}`}
-                onClick={() => onRowClick?.(row.sourceId, row.pointIndex)}
+                onClick={isInteractive ? () => onRowClick?.(row.sourceId, row.pointIndex) : undefined}
+                onKeyDown={
+                  isInteractive
+                    ? (e) => handleRowKeyDown(e, row.sourceId, row.pointIndex)
+                    : undefined
+                }
+                tabIndex={isInteractive ? 0 : undefined}
                 aria-rowindex={absoluteIdx + 1}
+                aria-label={rowLabel}
                 style={{
                   height: ROW_HEIGHT,
                   background: active
@@ -349,7 +391,7 @@ export function DataTable({
                       : isDark
                         ? 'rgba(255,255,255,0.03)'
                         : 'rgba(0,0,0,0.02)',
-                  cursor: 'pointer',
+                  cursor: isInteractive ? 'pointer' : 'default',
                   transition: 'background 80ms ease',
                   borderLeft: active ? `3px solid ${row.sourceColor}` : '3px solid transparent',
                 }}
@@ -395,7 +437,9 @@ export function DataTable({
                       fontVariantNumeric: 'tabular-nums',
                     }}
                   >
-                    {typeof val === 'number' ? val.toFixed(2) : '-'}
+                    {typeof val === 'number' && !Number.isNaN(val)
+                      ? val.toFixed(2)
+                      : '\u2014' /* em-dash for missing/NaN cells */}
                   </td>
                 ))}
               </tr>

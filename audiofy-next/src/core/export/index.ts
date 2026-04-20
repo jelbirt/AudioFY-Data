@@ -188,11 +188,15 @@ export async function exportAudio(
   duration: number,
   filename?: string,
   releaseBuffer?: number,
+  speed?: number,
 ): Promise<void> {
   // Check browser support for MediaRecorder (required by Tone.Recorder)
   if (typeof MediaRecorder === 'undefined') {
     throw new Error('Audio export is not supported in this browser (MediaRecorder unavailable)');
   }
+
+  // Defensively ensure the AudioContext is running — idempotent if already started.
+  await Tone.start();
 
   // Create a recorder connected to the Tone.js destination
   let recorder: Tone.Recorder;
@@ -223,15 +227,18 @@ export async function exportAudio(
     await recorder.start();
     transport.start();
 
-    // Wait for the duration + release buffer for tails (default 1s, configurable)
+    // Wait for the duration + release buffer for tails (default 1s, configurable).
+    // Scale wall-clock timeout by transport speed: transport time advances at
+    // `speed` multiplied on real time, so wall-clock wait = transport-seconds / speed.
     const buffer = releaseBuffer ?? 1.0;
+    const speedFactor = speed && speed > 0 ? speed : 1;
     await new Promise<void>((resolve) => {
       setTimeout(
         () => {
           transport.stop();
           resolve();
         },
-        (duration + buffer) * 1000,
+        ((duration + buffer) * 1000) / speedFactor,
       );
     });
 

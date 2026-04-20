@@ -33,14 +33,64 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}.${ms}`;
 }
 
+// ---------------------------------------------------------------------------
+// ProgressBarInner — isolates the `progress`-dependent subtree so that 60Hz
+// progress ticks only re-render the slider + fill + time readout, not the
+// entire PlaybackControls toolbar (stop/play/speed/loop buttons). This
+// sub-component is the ONLY place that subscribes to `progress` /
+// `currentTime` / `duration`.
+// ---------------------------------------------------------------------------
+interface ProgressBarInnerProps {
+  onProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onProgressKeyDown: (e: React.KeyboardEvent) => void;
+}
+
+const ProgressBarInner = memo(function ProgressBarInner({
+  onProgressClick,
+  onProgressKeyDown,
+}: ProgressBarInnerProps) {
+  const progress = useAppStore((s) => s.progress);
+  const currentTime = useAppStore((s) => s.currentTime);
+  const duration = useAppStore((s) => s.playbackConfig.duration);
+
+  const pct = Math.round(progress * 100);
+  const timeText = `${formatTime(currentTime)} of ${formatTime(duration)}`;
+
+  return (
+    <>
+      <div
+        className="progress-bar"
+        onClick={onProgressClick}
+        onKeyDown={onProgressKeyDown}
+        role="slider"
+        aria-label="Playback progress"
+        aria-orientation="horizontal"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuetext={timeText}
+        tabIndex={0}
+        title={`${pct}%`}
+      >
+        <div className="progress-bar-fill" style={{ width: `${progress * 100}%` }} />
+      </div>
+
+      <span className="playback-time" aria-hidden="true">
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </span>
+    </>
+  );
+});
+
 export const PlaybackControls = memo(function PlaybackControls({
   onStop,
   onTogglePlayPause,
   onSeekProgress,
 }: PlaybackControlsProps) {
+  // NOTE: `progress` / `currentTime` / `duration` are NOT subscribed here —
+  // they live in ProgressBarInner so the toolbar tree doesn't re-render every
+  // animation frame. Seek handlers read fresh progress via getState().
   const playbackState = useAppStore((s) => s.playbackState);
-  const currentTime = useAppStore((s) => s.currentTime);
-  const progress = useAppStore((s) => s.progress);
   const playbackConfig = useAppStore((s) => s.playbackConfig);
   const updatePlaybackConfig = useAppStore((s) => s.updatePlaybackConfig);
   const sources = useAppStore((s) => s.sources);
@@ -99,25 +149,10 @@ export const PlaybackControls = memo(function PlaybackControls({
         {playbackState === 'playing' ? '\u275A\u275A' : '\u25B6'}
       </button>
 
-      <div
-        className="progress-bar"
-        onClick={handleProgressClick}
-        onKeyDown={handleProgressKeyDown}
-        role="slider"
-        aria-label="Playback progress"
-        aria-valuenow={Math.round(progress * 100)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuetext={`${formatTime(currentTime)} of ${formatTime(playbackConfig.duration)}`}
-        tabIndex={0}
-        title={`${Math.round(progress * 100)}%`}
-      >
-        <div className="progress-bar-fill" style={{ width: `${progress * 100}%` }} />
-      </div>
-
-      <span className="playback-time" aria-hidden="true">
-        {formatTime(currentTime)} / {formatTime(playbackConfig.duration)}
-      </span>
+      <ProgressBarInner
+        onProgressClick={handleProgressClick}
+        onProgressKeyDown={handleProgressKeyDown}
+      />
 
       <select
         className="speed-select"

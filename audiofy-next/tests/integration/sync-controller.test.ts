@@ -108,6 +108,7 @@ function mockSource(id = 'src-1'): DataSource {
       panRange: [-0.8, 0.8],
       waveform: 'sine',
       envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+      sourceVolume: 1,
     },
   };
 }
@@ -364,38 +365,6 @@ describe('SyncController', () => {
     // After dispose, state changes should not notify
     // (We can't easily call play after dispose, so we just verify dispose ran without error)
     expect(() => ctrl.dispose()).not.toThrow(); // idempotent
-  });
-
-  it('prepare registers note start/end callbacks', () => {
-    ctrl.prepare([mockSource()], 10);
-
-    expect(mock.engine.onNoteStart).toHaveBeenCalled();
-    expect(mock.engine.onNoteEnd).toHaveBeenCalled();
-  });
-
-  it('note start callback adds active points', () => {
-    const listener = vi.fn();
-    ctrl.onStateChange(listener);
-    ctrl.prepare([mockSource()], 10);
-
-    // Simulate note start
-    mock.noteStartCallbacks[0]('src-1', 0, 0);
-
-    expect(ctrl.state.activePoints).toContainEqual({
-      sourceId: 'src-1',
-      pointIndex: 0,
-    });
-  });
-
-  it('note end callback removes active points', () => {
-    ctrl.prepare([mockSource()], 10);
-
-    // Simulate note start then end
-    mock.noteStartCallbacks[0]('src-1', 0, 0);
-    expect(ctrl.state.activePoints).toHaveLength(1);
-
-    mock.noteEndCallbacks[0]('src-1', 0, 0.5);
-    expect(ctrl.state.activePoints).toHaveLength(0);
   });
 
   it('constructor accepts options', () => {

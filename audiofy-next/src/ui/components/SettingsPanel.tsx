@@ -159,6 +159,27 @@ export const SettingsPanel = memo(function SettingsPanel() {
           </div>
 
           <div className="setting-group">
+            <label className="setting-label" htmlFor="setting-source-volume" title="Output volume for this source (mixes against master volume)">
+              Volume: {Math.round(selectedSource.audioMapping.sourceVolume * 100)}%
+            </label>
+            <input
+              id="setting-source-volume"
+              type="range"
+              className="setting-range"
+              min={0}
+              max={100}
+              step={1}
+              value={Math.round(selectedSource.audioMapping.sourceVolume * 100)}
+              aria-label={`Source volume: ${Math.round(selectedSource.audioMapping.sourceVolume * 100)}%`}
+              onChange={(e) =>
+                updateSourceMapping(selectedSource.id, {
+                  sourceVolume: parseInt(e.target.value) / 100,
+                })
+              }
+            />
+          </div>
+
+          <div className="setting-group">
             <label className="setting-label" htmlFor="setting-normalization">
               Normalization
             </label>

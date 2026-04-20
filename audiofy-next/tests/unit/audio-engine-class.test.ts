@@ -116,6 +116,7 @@ function makeSource(overrides: Partial<DataSource> = {}): DataSource {
       panRange: [-1, 1],
       waveform: 'sine',
       envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+      sourceVolume: 1,
     },
     ...overrides,
   };

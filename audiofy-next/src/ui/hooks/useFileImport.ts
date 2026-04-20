@@ -25,8 +25,10 @@ import { parseFileAsync, terminateParseWorker } from '@core/data';
 import { addRecentFile } from '@core/config';
 import { useAppStore } from '@store';
 
-/** Supported file extensions */
-const SUPPORTED_EXTENSIONS = ['xlsx', 'xls', 'csv', 'tsv', 'ods', 'json'];
+/** Supported file extensions. ODS is intentionally excluded — the exceljs
+ *  parser (replacement for xlsx@0.18.5) does not support OpenDocument; users
+ *  with .ods files should convert to .xlsx or .csv. */
+const SUPPORTED_EXTENSIONS = ['xlsx', 'xls', 'csv', 'tsv', 'json'];
 
 export function useFileImport() {
   const addSource = useAppStore((s) => s.addSource);
@@ -60,7 +62,8 @@ export function useFileImport() {
         }
 
         // Single sheet — import directly using the already-parsed data
-        const source = buildDataSource(parsedFile.sheets[0], fileName);
+        const existingSources = useAppStore.getState().sources;
+        const source = buildDataSource(parsedFile.sheets[0], fileName, { existingSources });
         addSource(source, parsedFile);
 
         // Update recent files — read fresh state to avoid stale closure
@@ -171,7 +174,11 @@ export function useFileImport() {
 
       const ext = file.name.split('.').pop()?.toLowerCase();
       if (!ext || !SUPPORTED_EXTENSIONS.includes(ext)) {
-        setError(`Unsupported file type: .${ext}`);
+        if (ext === 'ods') {
+          setError('ODS format is not supported. Please convert to .xlsx or .csv.');
+        } else {
+          setError(`Unsupported file type: .${ext}`);
+        }
         return;
       }
 
