@@ -44,8 +44,8 @@ const ALL_NUMERIC_CSV = '1,2,3\n4,5,6\n7,8,9\n10,11,12';
 // ---------------------------------------------------------------------------
 
 describe('Integration: createDataSource', () => {
-  it('parses CSV and creates a complete DataSource', () => {
-    const { parsedFile, source } = createDataSource(SIMPLE_CSV, 'test.csv');
+  it('parses CSV and creates a complete DataSource', async () => {
+    const { parsedFile, source } = await createDataSource(SIMPLE_CSV, 'test.csv');
 
     // ParsedFile
     expect(parsedFile.fileName).toBe('test.csv');
@@ -71,8 +71,8 @@ describe('Integration: createDataSource', () => {
     expect(source.normalization).toBe('min-max');
   });
 
-  it('creates DataSource with custom options', () => {
-    const { source } = createDataSource(SIMPLE_CSV, 'test.csv', {
+  it('creates DataSource with custom options', async () => {
+    const { source } = await createDataSource(SIMPLE_CSV, 'test.csv', {
       color: '#ff0000',
       normalization: 'z-score',
     });
@@ -81,19 +81,28 @@ describe('Integration: createDataSource', () => {
     expect(source.normalization).toBe('z-score');
   });
 
-  it('throws on empty file', () => {
-    expect(() => createDataSource('', 'empty.csv')).toThrow();
+  it('throws on empty file', async () => {
+    await expect(createDataSource('', 'empty.csv')).rejects.toThrow();
   });
 
-  it('throws on insufficient numeric columns', () => {
+  it('throws on insufficient numeric columns', async () => {
     // buildDataSource requires 2 numeric columns; all-text CSV won't have any
-    expect(() => createDataSource('name,value\nAlice,test\nBob,hello', 'bad.csv')).toThrow();
+    await expect(
+      createDataSource('name,value\nAlice,test\nBob,hello', 'bad.csv'),
+    ).rejects.toThrow();
   });
 
-  it('handles out-of-range sheet index', () => {
-    expect(() =>
+  it('handles out-of-range sheet index', async () => {
+    await expect(
       createDataSource(SIMPLE_CSV, 'test.csv', { sheetIndex: 5 }),
-    ).toThrow(/Sheet index 5 out of range/);
+    ).rejects.toThrow(/Sheet index 5 out of range/);
+  });
+
+  it('carries columnQuality through the parsed sheet on the returned ParsedFile', async () => {
+    const { parsedFile } = await createDataSource(SIMPLE_CSV, 'test.csv');
+    expect(parsedFile.sheets[0].columnQuality).toBeDefined();
+    expect(parsedFile.sheets[0].columnQuality).toHaveLength(2);
+    expect(parsedFile.sheets[0].columnQuality?.every((q) => q.isNumeric)).toBe(true);
   });
 });
 
@@ -102,8 +111,8 @@ describe('Integration: createDataSource', () => {
 // ---------------------------------------------------------------------------
 
 describe('Integration: Data pipeline → computeNotes', () => {
-  it('produces correct number of notes for a data source', () => {
-    const { source } = createDataSource(SIMPLE_CSV, 'test.csv');
+  it('produces correct number of notes for a data source', async () => {
+    const { source } = await createDataSource(SIMPLE_CSV, 'test.csv');
     const notes = computeNotes(source, 10);
 
     expect(notes).toHaveLength(5);
@@ -119,8 +128,8 @@ describe('Integration: Data pipeline → computeNotes', () => {
     });
   });
 
-  it('notes are evenly spaced across duration', () => {
-    const { source } = createDataSource(SIMPLE_CSV, 'test.csv');
+  it('notes are evenly spaced across duration', async () => {
+    const { source } = await createDataSource(SIMPLE_CSV, 'test.csv');
     const duration = 10;
     const notes = computeNotes(source, duration);
 
@@ -130,8 +139,8 @@ describe('Integration: Data pipeline → computeNotes', () => {
     });
   });
 
-  it('frequency increases with Y values for min-max normalized data', () => {
-    const { source } = createDataSource(SIMPLE_CSV, 'test.csv', {
+  it('frequency increases with Y values for min-max normalized data', async () => {
+    const { source } = await createDataSource(SIMPLE_CSV, 'test.csv', {
       normalization: 'min-max',
     });
     const notes = computeNotes(source, 10);
@@ -143,11 +152,58 @@ describe('Integration: Data pipeline → computeNotes', () => {
     }
   });
 
-  it('returns empty for source with no rows', () => {
-    const { source } = createDataSource(SIMPLE_CSV, 'test.csv');
+  it('returns empty for source with no rows', async () => {
+    const { source } = await createDataSource(SIMPLE_CSV, 'test.csv');
     const emptySource: DataSource = { ...source, rows: [] };
     const notes = computeNotes(emptySource, 10);
     expect(notes).toHaveLength(0);
+  });
+
+  it('skips rows with NaN x or y values in computeNotes', () => {
+    // Manually construct a source with NaN rows to avoid relying on parser behavior.
+    const base: DataSource = {
+      id: 'test-nan',
+      name: 'nan-test',
+      fileName: 'nan.csv',
+      color: '#000',
+      normalization: 'min-max',
+      headers: { row: [], col: ['x', 'y'] },
+      rows: [
+        [1, 10],
+        [2, NaN],
+        [NaN, 30],
+        [4, 40],
+      ],
+      columns: [
+        {
+          index: 0,
+          name: 'x',
+          type: 'numeric',
+          stats: { min: 1, max: 4, mean: 2.33, stdDev: 1.25, median: 2, q1: 1.5, q3: 3 },
+        },
+        {
+          index: 1,
+          name: 'y',
+          type: 'numeric',
+          stats: { min: 10, max: 40, mean: 26.67, stdDev: 12.47, median: 30, q1: 20, q3: 35 },
+        },
+      ],
+      audioMapping: {
+        xColumn: 0,
+        yColumn: 1,
+        frequencyRange: [200, 2000],
+        frequencyScale: 'log',
+        volumeRange: [0.1, 0.8],
+        panRange: [-0.8, 0.8],
+        waveform: 'sine',
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+        sourceVolume: 1,
+      },
+    };
+    const notes = computeNotes(base, 4);
+    // Only rows 0 and 3 are fully numeric
+    expect(notes).toHaveLength(2);
+    expect(notes.map((n) => n.pointIndex)).toEqual([0, 3]);
   });
 });
 

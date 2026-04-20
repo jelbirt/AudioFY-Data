@@ -81,6 +81,7 @@ const audioMappingSchema = z.object({
   panRange: z.tuple([z.number().min(-1).max(1), z.number().min(-1).max(1)]),
   waveform: oscillatorTypeSchema,
   envelope: adsrSchema,
+  sourceVolume: z.number().min(0).max(1).default(1),
 }) satisfies z.ZodType<AudioMapping>;
 
 const sourceConfigSchema = z.object({

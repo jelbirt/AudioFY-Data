@@ -14,10 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+Object.freeze(Object.prototype);
+Object.freeze(Array.prototype);
+Object.freeze(Object);
+
 /**
- * Web Worker for file parsing — runs SheetJS parsing and header detection
- * off the main thread to keep the UI responsive for large files.
+ * Web Worker for file parsing — runs papaparse (CSV/TSV) and exceljs (XLSX)
+ * parsing off the main thread to keep the UI responsive for large files.
  */
+import type { ParsedFile } from '@types';
 import { parseFile } from './parser';
 
 export interface ParseWorkerRequest {
@@ -28,15 +33,15 @@ export interface ParseWorkerRequest {
 
 export interface ParseWorkerResponse {
   id: number;
-  result?: ReturnType<typeof parseFile>;
+  result?: ParsedFile;
   error?: string;
 }
 
-self.onmessage = (event: MessageEvent<ParseWorkerRequest>) => {
+self.onmessage = async (event: MessageEvent<ParseWorkerRequest>) => {
   const { id, data, fileName } = event.data;
 
   try {
-    const result = parseFile(data, fileName);
+    const result = await parseFile(data, fileName);
     const response: ParseWorkerResponse = { id, result };
     self.postMessage(response);
   } catch (err) {

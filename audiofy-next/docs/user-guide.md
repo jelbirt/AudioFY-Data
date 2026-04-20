@@ -17,8 +17,10 @@ This guide walks through the complete workflow: importing data, configuring soni
 | Excel | `.xlsx`, `.xls` |
 | CSV | `.csv` |
 | TSV | `.tsv` |
-| OpenDocument | `.ods` |
 | JSON | `.json` |
+
+> **Note:** OpenDocument (`.ods`) is no longer supported. Convert `.ods` files
+> to `.xlsx` or `.csv` before importing.
 
 ### How to Import
 
@@ -183,24 +185,21 @@ Click the **Export Audio** button in the toolbar. This records the full playback
 - **Export SVG** — vector format, scalable, editable in Illustrator/Inkscape
 - **Export PNG** — raster format at 2x resolution for high-DPI displays
 
-## Saving and Loading Projects
+## Saving and Loading Settings
 
 ### Save
 
-`Ctrl+S` / `Cmd+S` or the **Save** button. Downloads an `audiofy-project.json` file containing:
+`Ctrl+S` / `Cmd+S` or the **Save** button. Downloads an `audiofy-settings.json` file containing:
 
-- All source configurations (file paths, column mappings, colors, normalization, audio mappings)
 - Playback settings (speed, loop, duration)
 - Visualization settings (theme, grid, legend, point size)
 - Audio settings (master volume, effects)
 
-**Note:** Project files store configuration only, not the raw data. You'll need the original data files available when loading a project.
+**Note:** Settings files do not store data sources or raw data — re-open your data files after loading.
 
 ### Load
 
-Click the **Load** button and select a previously saved `.json` project file. AudioFY validates the config against its schema and restores playback, visualization, and audio settings. Older config versions (v1 or missing version) are automatically migrated. If validation fails, you'll see an error message with details.
-
-**Current limitation:** Loading a project restores settings (playback speed, effects, theme, etc.) but does not automatically re-import data sources. You'll need to re-open your data files manually after loading a project.
+Click the **Load** button and select a previously saved `.json` settings file. AudioFY validates the config against its schema and restores playback, visualization, and audio settings. Older config versions (v1 or missing version) are automatically migrated. If validation fails, you'll see an error message with details.
 
 ## Troubleshooting
 
@@ -210,16 +209,17 @@ Click the **Load** button and select a previously saved `.json` project file. Au
 - Ensure the frequency range makes sense (min < max, both in audible range).
 
 ### File won't import
-- Confirm the file is a supported format (xlsx, csv, tsv, ods, json).
+- Confirm the file is a supported format (xlsx, xls, csv, tsv, json). ODS is no longer supported — convert to XLSX or CSV first.
 - The file must contain at least 2 numeric columns for sonification.
 - Large files may take a moment — parsing runs in a background thread to keep the UI responsive.
+- Columns with many blank values will be flagged with a warning badge in the import preview (e.g., "⚠ 45% blank"). Missing cells are skipped during playback and not shown on the chart — not treated as zero.
 
 ### Scatter plot is empty
 - Check that the selected X and Y columns contain numeric data.
 - If all values are identical, the plot may appear as a single point.
 
-### Project won't load
-- Project files must match the current config schema (version 2). Older files are automatically migrated when possible.
+### Settings won't load
+- Settings files must match the current config schema (version 2). Older files are automatically migrated when possible.
 - Check the error message for specific validation failures (e.g., missing fields, out-of-range values).
 
 ### Desktop (Tauri) vs. Web

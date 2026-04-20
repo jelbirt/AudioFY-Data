@@ -54,11 +54,41 @@ export interface DataSource {
   audioMapping: AudioMapping;
 }
 
+/**
+ * Per-column data-quality metrics computed during parsing.
+ * Surface in UI code (e.g. ImportPreviewModal) to warn users about sparse
+ * columns that pass the numeric threshold on populated cells but have many
+ * blanks — those blanks become NaN downstream and are skipped during
+ * playback/rendering.
+ */
+export interface ColumnQuality {
+  /** Column index within the sheet's `data` array. */
+  index: number;
+  /** Count of non-null cells in this column. */
+  nonNullCount: number;
+  /** Count of cells that parsed as numbers. */
+  numericCount: number;
+  /** Total number of rows in the sheet (denominator for populatedRatio). */
+  totalRowCount: number;
+  /** numericCount / nonNullCount — fraction of populated cells that are numeric. */
+  numericRatio: number;
+  /** nonNullCount / totalRowCount — fraction of rows that actually have data. */
+  populatedRatio: number;
+  /** Whether this column passes the "numeric" test (used to build numericColumns). */
+  isNumeric: boolean;
+}
+
 export interface ParsedSheet {
   name: string;
   headers: { row: string[]; col: string[] };
   data: (string | number | null)[][];
   numericColumns: number[];
+  /**
+   * Per-column quality metrics. Optional for backward compatibility with
+   * fixtures created before the field was introduced; parsers produced by
+   * the current `parser.ts` always populate this.
+   */
+  columnQuality?: ColumnQuality[];
 }
 
 export interface ParsedFile {
@@ -100,6 +130,7 @@ export interface AudioMapping {
   panRange: [number, number];
   waveform: OscillatorType;
   envelope: ADSR;
+  sourceVolume: number;
 }
 
 export interface EffectsConfig {

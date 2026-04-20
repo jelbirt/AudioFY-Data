@@ -49,6 +49,7 @@ function mockSource(overrides: Partial<DataSource> = {}): DataSource {
       panRange: [-0.8, 0.8],
       waveform: 'sine',
       envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.5 },
+      sourceVolume: 1,
     },
     ...overrides,
   };

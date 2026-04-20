@@ -14,7 +14,7 @@ All shortcuts work globally except when focus is inside a text input, textarea, 
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+O` / `Cmd+O` | Open file dialog |
-| `Ctrl+S` / `Cmd+S` | Save project to JSON |
+| `Ctrl+S` / `Cmd+S` | Save settings to JSON |
 
 ## Interface
 

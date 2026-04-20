@@ -117,11 +117,14 @@ export class AudioEngine {
     this.removeSource(source.id);
 
     const panner = new Tone.Panner(0);
-    const gain = new Tone.Gain(1);
+    const initialVolume = Number.isFinite(source.audioMapping.sourceVolume)
+      ? Math.max(0, Math.min(1, source.audioMapping.sourceVolume))
+      : 1;
+    const gain = new Tone.Gain(initialVolume);
 
     const synth = new Tone.PolySynth(Tone.Synth, {
       maxPolyphony: 16,
-      oscillator: { type: toneOscType(source.audioMapping.waveform) },
+      oscillator: { type: source.audioMapping.waveform },
       envelope: {
         attack: source.audioMapping.envelope.attack,
         decay: source.audioMapping.envelope.decay,
@@ -156,7 +159,7 @@ export class AudioEngine {
   setWaveform(sourceId: string, waveform: OscillatorType): void {
     const channel = this.channels.get(sourceId);
     if (channel) {
-      channel.synth.set({ oscillator: { type: toneOscType(waveform) } });
+      channel.synth.set({ oscillator: { type: waveform } });
     }
   }
 
@@ -429,7 +432,15 @@ export function computeNotes(source: DataSource, totalDuration: number): Schedul
   const noteSpacing = totalDuration / numPoints;
   const noteDuration = Math.max(0.05, noteSpacing * 0.8); // 80% of spacing, min 50ms
 
-  return rows.map((_, i) => {
+  const notes: ScheduledNote[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    // Skip rows where the mapped X or Y cell was missing/non-numeric. These
+    // rows contribute no audio — they exist in the source for alignment with
+    // the original spreadsheet but carry no sonifiable value on the chosen
+    // axes. Time slots stay reserved so overall playback duration is
+    // preserved.
+    if (Number.isNaN(xValues[i]) || Number.isNaN(yValues[i])) continue;
+
     const frequency = mapFrequency(normalizedY[i], mapping);
     const velocity = mapToRange(
       Math.max(0, Math.min(1, normalizedY[i])),
@@ -438,7 +449,7 @@ export function computeNotes(source: DataSource, totalDuration: number): Schedul
     );
     const pan = mapToRange(normalizedX[i], mapping.panRange[0], mapping.panRange[1]);
 
-    return {
+    notes.push({
       sourceId: source.id,
       pointIndex: i,
       frequency,
@@ -446,8 +457,9 @@ export function computeNotes(source: DataSource, totalDuration: number): Schedul
       pan: Math.max(-1, Math.min(1, pan)),
       time: i * noteSpacing,
       duration: noteDuration,
-    };
-  });
+    });
+  }
+  return notes;
 }
 
 /**
@@ -471,27 +483,6 @@ function mapFrequency(normalizedValue: number, mapping: AudioMapping): number {
     default:
       return mapToFrequencyLog(clamped, minHz, maxHz);
   }
-}
-
-/**
- * Convert our OscillatorType to Tone.js compatible type string.
- */
-function toneOscType(
-  type: OscillatorType,
-):
-  | 'sine'
-  | 'square'
-  | 'sawtooth'
-  | 'triangle'
-  | 'fmsine'
-  | 'fmsquare'
-  | 'fmsawtooth'
-  | 'fmtriangle'
-  | 'amsine'
-  | 'amsquare'
-  | 'amsawtooth'
-  | 'amtriangle' {
-  return type;
 }
 
 /**

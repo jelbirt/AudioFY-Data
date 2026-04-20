@@ -44,53 +44,61 @@ export function normalize(values: number[], mode: NormalizationMode): number[] {
 
 /**
  * Min-max normalization: scales values to [0, 1].
+ * NaN inputs pass through as NaN.
  */
 export function normalizeMinMax(values: number[]): number[] {
   let min = Infinity;
   let max = -Infinity;
   for (const v of values) {
+    if (Number.isNaN(v)) continue;
     if (v < min) min = v;
     if (v > max) max = v;
   }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return values.map(() => NaN);
   const range = max - min;
-  if (range === 0) return values.map(() => 0.5);
-  return values.map((v) => (v - min) / range);
+  if (range === 0) return values.map((v) => (Number.isNaN(v) ? NaN : 0.5));
+  return values.map((v) => (Number.isNaN(v) ? NaN : (v - min) / range));
 }
 
 /**
  * Z-score normalization: centers around mean with unit standard deviation.
- * Output is NOT bounded to [0, 1].
+ * Output is NOT bounded to [0, 1]. NaN inputs pass through as NaN.
  */
 export function normalizeZScore(values: number[]): number[] {
   const stats = computeStats(values);
-  if (stats.stdDev === 0) return values.map(() => 0);
-  return values.map((v) => (v - stats.mean) / stats.stdDev);
+  if (stats.stdDev === 0) return values.map((v) => (Number.isNaN(v) ? NaN : 0));
+  return values.map((v) => (Number.isNaN(v) ? NaN : (v - stats.mean) / stats.stdDev));
 }
 
 /**
  * Robust normalization: uses median and IQR, resistant to outliers.
  * Output is roughly centered around 0.5 for the interquartile range.
+ * NaN inputs pass through as NaN.
  */
 export function normalizeRobust(values: number[]): number[] {
   const stats = computeStats(values);
   const iqr = stats.q3 - stats.q1;
-  if (iqr === 0) return values.map(() => 0.5);
-  // Scale so Q1 maps to 0 and Q3 maps to 1, then clamp to [0, 1]
-  return values.map((v) => Math.max(0, Math.min(1, (v - stats.q1) / iqr)));
+  if (iqr === 0) return values.map((v) => (Number.isNaN(v) ? NaN : 0.5));
+  return values.map((v) =>
+    Number.isNaN(v) ? NaN : Math.max(0, Math.min(1, (v - stats.q1) / iqr)),
+  );
 }
 
 /**
  * Log normalization: applies log transform then min-max scales.
  * Handles negative values by shifting to positive range first.
+ * NaN inputs pass through as NaN.
  */
 export function normalizeLog(values: number[]): number[] {
   let min = Infinity;
   for (const v of values) {
+    if (Number.isNaN(v)) continue;
     if (v < min) min = v;
   }
+  if (!Number.isFinite(min)) return values.map(() => NaN);
   // Shift so all values are >= 1 (log(1) = 0)
-  const shifted = values.map((v) => v - min + 1);
-  const logged = shifted.map((v) => Math.log(v));
+  const shifted = values.map((v) => (Number.isNaN(v) ? NaN : v - min + 1));
+  const logged = shifted.map((v) => (Number.isNaN(v) ? NaN : Math.log(v)));
   return normalizeMinMax(logged);
 }
 
@@ -105,6 +113,10 @@ export function computeStats(values: number[]): ColumnStats {
   // Filter out NaN and Infinity values for robust statistics
   const finite = values.filter(Number.isFinite);
   if (finite.length === 0) {
+    // All inputs were NaN / ±Infinity — return zero-sentinel stats rather
+    // than NaN everywhere, which would cascade into the UI as "NaN" strings.
+    // eslint-disable-next-line no-console
+    console.warn('[computeStats] All values were NaN/Infinity; returning zero sentinel stats.');
     return { min: 0, max: 0, mean: 0, stdDev: 0, median: 0, q1: 0, q3: 0 };
   }
 

@@ -304,7 +304,9 @@ body {
 .progress-bar {
   width: 140px;
   height: 4px;
-  background: var(--bg-tertiary);
+  /* Use --text-muted for ≥3:1 contrast with panel bg (--bg-secondary) in both themes.
+     Previously --bg-tertiary gave only ~1.3:1 (dark) / ~1.1:1 (light), failing WCAG 2.2 1.4.11. */
+  background: var(--text-muted);
   border-radius: 2px;
   position: relative;
   cursor: pointer;
@@ -315,6 +317,24 @@ body {
   background: var(--accent);
   border-radius: 2px;
   transition: width 0.05s linear;
+  position: relative;
+}
+
+/* Visible thumb at the fill edge. 12px circle, accent-colored, with a contrasting
+   ring so it remains visible against both the fill and the track in any theme. */
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 0 1px var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .progress-bar:hover .progress-bar-fill {
@@ -615,6 +635,16 @@ body {
   outline-offset: 2px;
 }
 
+/* Emphasize the thumb when the slider is keyboard-focused. */
+.progress-bar:focus-visible .progress-bar-fill::after {
+  width: 14px;
+  height: 14px;
+  right: -7px;
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 4px rgba(10, 132, 255, 0.3);
+}
+
 /* Ensure remove button is visible when focused via keyboard */
 .source-remove:focus-visible {
   opacity: 1;
@@ -680,4 +710,30 @@ body {
   gap: 8px;
   padding: 12px 20px 16px;
   border-top: 1px solid var(--border);
+}
+
+.error-boundary {
+  padding: 32px;
+  text-align: center;
+  color: var(--danger);
+  background: var(--bg-primary);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.error-boundary-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.error-boundary-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0;
 }

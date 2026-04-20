@@ -45,6 +45,7 @@ vi.mock('tone', () => {
       stop: vi.fn(),
       position: 0,
     })),
+    start: vi.fn().mockResolvedValue(undefined),
   };
 });
 
