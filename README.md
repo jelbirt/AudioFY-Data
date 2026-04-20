@@ -1,46 +1,40 @@
-# AudioFY Data
+# AudioFY
 
-## Introduction
+**Data sonification and visualization desktop application** — transforms tabular data into synchronized audio and animated scatter plots, letting you *hear* and *see* your data at the same time.
 
-This repository contains the Java code and related configuration files for *AudioFY Data*, a
-Java-based computer application for analyzing numerical datasets and
-generating audio and visual representations of results.
+The active codebase is in [**`audiofy-next/`**](audiofy-next/README.md) — a Tauri v2 + React + TypeScript desktop app supporting Windows, macOS, and Linux.
 
+## Quick start
 
-## User Interface
+```bash
+cd audiofy-next
+npm install
+npm run tauri dev
+```
 
-Upon launch, there are three visible windows associated with the AudioFY app:
+See [`audiofy-next/README.md`](audiofy-next/README.md) for full setup, features, and documentation.
 
-1. **Main Window** - left side of the screen, analysis configuration
-2. **Graph Panel** - Upper right panel to display graph of data points during play-through
-3. **Data Panel** - Lower right panel to display numerical values of data points and any transformations as they are played
+## History
 
-## Data Input
+This repository began in 2023 as a Java Swing prototype developed during the Summer 2023 Aisiku Research Fellowship at Worcester State University. That original Java codebase has been archived — the final commit containing it is preserved under the `legacy-java` git tag:
 
-Data is read in through a standard 'File' menu button at the top-left of the Main Window, launching a File Chooser to select the input.
+```bash
+git checkout legacy-java
+```
 
-In the Main Window, sheetTabPanes open for each sheet within the file chosen allowing users to select one (or multiple) data sources from each sheet.
+`audiofy-next` is a ground-up rewrite in TypeScript. Key improvements over the original:
 
-## Outputs
+- 32-bit float audio at 48 kHz (was 8-bit at 16,384 Hz)
+- Polyphonic synthesis with ADSR envelopes (was monophonic sine with click artifacts)
+- Frame-accurate audio-visual synchronization (was busy-wait threading)
+- Multi-format file support — xlsx, xls, csv, tsv, json (was Excel-only)
+- Full keyboard accessibility and screen-reader support
+- Cross-platform desktop builds at ~10–15 MB (was Windows-only)
 
-Select output file directory through the 'File' menu at the top of the Main Window (similar to loading input file).
+## License
 
-Specify which output type(s) to be generated at the bottom of the Main Window
-prior to play-through. Text output files contain source data points as
-well as the results of any normalization or transformations.
-
-Output file types currently supported:
-
-- Comma-Separated Value (.csv)
-- Tab-Delimited (.txt)
-- Audio File of the sonified data (.wav)
-
-In the future, we hope to develop features to offer generating image (.png) and video (.mp4) files of the play-through and the final Graph Panel image after analysis conclusion.
+GPL-3.0 — see [LICENSE.md](LICENSE.md).
 
 ## Contact
 
-With any questions/suggestions, reach out to the author at jelbirt@worcester.edu.
-
-## Acknowledgements
-
-*AudioFY Data* was developed by Jacob Elbirt as part of the Summer 2023 Aisiku Research Fellowship through Worcester State University.
+Original author: Jacob Elbirt — jelbirt@worcester.edu
